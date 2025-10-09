@@ -14,18 +14,7 @@ const User = () => {
   const [errors, setErrors] = useState({ name: false, number: false, college: false });
   const [user, setUser] = useState(null);
 
-  const colleges = [
-    "Marwadi University",
-    "Atmiya University",
-    "RK University",
-    "Darshan University",
-    "VVP Engineering College",
-    "Christ College",
-    "Gardi Vidyapith",
-    "Government Engineering College Rajkot",
-    "Saurashtra University",
-    "Om Engineering College"
-  ];
+
   const colleges = [
     "Marwadi University",
     "Atmiya University",
