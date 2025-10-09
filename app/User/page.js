@@ -1,8 +1,11 @@
-"use client";
-import React, { useState, useEffect } from "react";
+"use client"
+import Link from 'next/link';
+import React, { useState } from 'react';
 import { auth, db } from "../../lib/firebase";
 import { doc, updateDoc, getDoc } from "firebase/firestore";
 import { onAuthStateChanged } from "firebase/auth";
+
+
 
 const User = () => {
   const [selectedCollege, setSelectedCollege] = useState("");
@@ -11,6 +14,18 @@ const User = () => {
   const [errors, setErrors] = useState({ name: false, number: false, college: false });
   const [user, setUser] = useState(null);
 
+  const colleges = [
+    "Marwadi University",
+    "Atmiya University",
+    "RK University",
+    "Darshan University",
+    "VVP Engineering College",
+    "Christ College",
+    "Gardi Vidyapith",
+    "Government Engineering College Rajkot",
+    "Saurashtra University",
+    "Om Engineering College"
+  ];
   const colleges = [
     "Marwadi University",
     "Atmiya University",
