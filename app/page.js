@@ -1,6 +1,6 @@
 "use client"
 // import React from 'react';
-import registration from './Frist Page/page';
+import registration from './Login/page';
 
 const page = () => {
   return registration();

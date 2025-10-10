@@ -31,7 +31,7 @@ const Registration = () => {
         }
 
         setUser(u);
-        router.push("/User"); // ✅ move to User details page
+        router.push("/Home"); // ✅ move to User details page
       } else {
         setUser(null);
       }
