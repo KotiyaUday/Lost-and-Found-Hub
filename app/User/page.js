@@ -1,7 +1,7 @@
 "use client"
 import Link from 'next/link';
 import React, { useState } from 'react';
-
+import Home from '../Home/page';
 
 
 const User = () => {
@@ -47,7 +47,7 @@ const User = () => {
 
                 <div className='flex-1 flex flex-col items-center justify-center'>
                     <h1 className='text-4xl font-medium m-5'>Enter Your Details</h1>
-                    <form className='flex items-center justify-center flex-col' onSubmit={handleData}>
+                    <form className='flex items-center justify-center flex-col' /*onSubmit={handleData}*/>
 
                         <input type="text" className='border-2 border-gray-500 h-8 w-85 rounded-md m-3 text-xl p-5 focus:border-black outline-none' placeholder='Enter Your Name' value={name} onChange={(e) => {
                             setName(e.target.value)
@@ -69,7 +69,7 @@ const User = () => {
                             ))}
                         </select>
 
-                        <button className='text-xl font-medium w-60 p-3 mt-5 bg-blue-400 rounded-4xl hover:bg-blue-200 active:scale-95'>Submit</button>
+                        <Link href='Home' className='text-xl font-medium w-60 p-3 mt-5 bg-blue-400 rounded-4xl hover:bg-blue-200 active:scale-95 text-center'>Submit</Link>
                     </form>
                 </div>
 
