@@ -32,7 +32,7 @@ const AddPost = () => {
         // Assuming user has college stored in their profile (you can fetch from Firestore 'users' collection)
         // Example: db.collection('users').doc(u.uid).get()
         // For now, let's mock it as "RK University"
-        setCollege("RK University");
+        setCollege("RK");
       }
     });
     return () => unsubscribe();
