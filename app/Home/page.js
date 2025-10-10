@@ -267,13 +267,15 @@ const Home = () => {
               {/* Show Message Button only if Lost */}
               {selectedPost.postType === "lost" && (
                 <button
-                onClick={() =>
-                  window.location.href = `/Chat?otherUser=${selectedPost.userEmail}&itemImage=${selectedPost.image}`
-                }
-                className="mt-5 w-full bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600 transition-all duration-300"
-              >
-                Send Message to Owner
-              </button>
+                  onClick={() =>
+                    (window.location.href = `/Chat?otherUser=${encodeURIComponent(
+                      selectedPost.userEmail
+                    )}&itemImage=${encodeURIComponent(selectedPost.image)}`)
+                  }
+                  className="mt-5 w-full bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600 transition-all duration-300"
+                >
+                  Send Message to Owner
+                </button>
               )}
             </div>
           </div>
