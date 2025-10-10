@@ -21,11 +21,20 @@ const AddPost = () => {
   const [success, setSuccess] = useState("");
   const [error, setError] = useState("");
   const [user, setUser] = useState(null);
+  const [college, setCollege] = useState("");
 
   useEffect(() => setHydrated(true), []);
 
   useEffect(() => {
-    const unsubscribe = auth.onAuthStateChanged((u) => setUser(u));
+    const unsubscribe = auth.onAuthStateChanged(async (u) => {
+      setUser(u);
+      if (u) {
+        // Assuming user has college stored in their profile (you can fetch from Firestore 'users' collection)
+        // Example: db.collection('users').doc(u.uid).get()
+        // For now, let's mock it as "RK University"
+        setCollege("RK University");
+      }
+    });
     return () => unsubscribe();
   }, []);
 
@@ -74,53 +83,53 @@ const AddPost = () => {
     try {
       let imageURL = "";
 
-      // ✅ Upload image if exists
       if (image) {
         const formData = new FormData();
         formData.append("image", image);
 
-        const response = await fetch("https://api.imgbb.com/1/upload?key=97d6db2b04a85a251125af9109610b31", {
-          method: "POST",
-          body: formData,
-        });
+        const response = await fetch(
+          "https://api.imgbb.com/1/upload?key=97d6db2b04a85a251125af9109610b31",
+          {
+            method: "POST",
+            body: formData,
+          }
+        );
 
         const data = await response.json();
-        if (data.success) {
-          imageURL = data.data.url;
-        } else {
-          throw new Error("Image upload failed");
-        }
+        if (data.success) imageURL = data.data.url;
+        else throw new Error("Image upload failed");
       }
 
-      // Prepare post data
       const submittedData = {
         ...form,
         postType: activeTab,
         category: form.category === "Other" ? form.otherCategory : form.category,
-        imageURL: imageURL || "", // store the uploaded image URL
+        imageURL: imageURL || "https://www.shutterstock.com/shutterstock/videos/1111389205/thumb/12.jpg?ip=x480",
         timestamp: serverTimestamp(),
+        college: college || "Not Specified", // ✅ Add college here
       };
 
-      // Add document to Firestore
       await addDoc(collection(db, "items"), submittedData);
 
-      setSuccess("Post added successfully!");
+      setSuccess("🎉 Your post has been added successfully!");
       setError("");
       resetForm();
     } catch (err) {
       console.error("Error adding document:", err);
-      setError("Failed to add post. Please try again.");
+      setError("❌ Failed to add post. Please try again.");
       setSuccess("");
     }
   };
 
   return (
-    <div className="bg-gray-300 min-h-screen grid grid-cols-4">
-      {/* Sidebar */}
-      <Sideheader />
+    <div className="flex min-h-screen bg-gray-300">
+      {/* 🔹 Sticky Sidebar */}
+      <div className="flex-shrink-0 sticky top-0 h-screen">
+        <Sideheader />
+      </div>
 
-      {/* Main Content */}
-      <div className="col-span-3 p-6">
+      {/* 🔹 Scrollable Main Content */}
+      <div className="flex-1 p-6 overflow-y-auto max-h-screen">
         <div className="max-w-3xl mx-auto bg-white shadow-lg rounded-xl p-6 sm:p-8 border border-gray-200">
           <h2 className="text-2xl sm:text-3xl font-bold text-center text-indigo-700 mb-6">
             Add Post – Lost & Found Hub
@@ -163,9 +172,7 @@ const AddPost = () => {
           >
             {/* Title */}
             <div>
-              <label className="block font-medium mb-1 text-gray-700">
-                Title *
-              </label>
+              <label className="block font-medium mb-1 text-gray-700">Title *</label>
               <input
                 type="text"
                 name="title"
@@ -173,9 +180,7 @@ const AddPost = () => {
                 onChange={handleChange}
                 className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-indigo-500"
                 placeholder={
-                  activeTab === "lost"
-                    ? "E.g., Lost Wallet"
-                    : "E.g., Found Mobile Phone"
+                  activeTab === "lost" ? "E.g., Lost Wallet" : "E.g., Found Mobile Phone"
                 }
                 required
               />
@@ -183,9 +188,7 @@ const AddPost = () => {
 
             {/* Description */}
             <div>
-              <label className="block font-medium mb-1 text-gray-700">
-                Description *
-              </label>
+              <label className="block font-medium mb-1 text-gray-700">Description *</label>
               <textarea
                 name="description"
                 value={form.description}
@@ -199,9 +202,7 @@ const AddPost = () => {
             {/* Location + Date */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5">
               <div>
-                <label className="block font-medium mb-1 text-gray-700">
-                  Location *
-                </label>
+                <label className="block font-medium mb-1 text-gray-700">Location *</label>
                 <input
                   type="text"
                   name="location"
@@ -213,9 +214,7 @@ const AddPost = () => {
                 />
               </div>
               <div>
-                <label className="block font-medium mb-1 text-gray-700">
-                  Date *
-                </label>
+                <label className="block font-medium mb-1 text-gray-700">Date *</label>
                 <input
                   type="date"
                   name="date"
@@ -229,9 +228,7 @@ const AddPost = () => {
 
             {/* Category */}
             <div>
-              <label className="block font-medium mb-1 text-gray-700">
-                Category *
-              </label>
+              <label className="block font-medium mb-1 text-gray-700">Category *</label>
               <select
                 name="category"
                 value={form.category}
@@ -249,12 +246,9 @@ const AddPost = () => {
               </select>
             </div>
 
-            {/* Other Category */}
             {form.category === "Other" && (
               <div>
-                <label className="block font-medium mb-1 text-gray-700">
-                  Enter Category Name *
-                </label>
+                <label className="block font-medium mb-1 text-gray-700">Enter Category Name *</label>
                 <input
                   type="text"
                   name="otherCategory"
@@ -269,9 +263,7 @@ const AddPost = () => {
 
             {/* Contact Info */}
             <div>
-              <label className="block font-medium mb-1 text-gray-700">
-                Contact Info *
-              </label>
+              <label className="block font-medium mb-1 text-gray-700">Contact Info *</label>
               <input
                 type="text"
                 name="contact"
@@ -315,7 +307,7 @@ const AddPost = () => {
               </button>
             </div>
 
-            {/* Messages */}
+            {/* Success/Error Messages */}
             {success && (
               <p className="text-green-600 font-medium text-center mt-4">{success}</p>
             )}

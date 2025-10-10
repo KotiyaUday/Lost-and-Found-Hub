@@ -1,200 +1,123 @@
-"use client";
-import React, { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
-import { auth, db } from "../../lib/firebase";
-import { doc, updateDoc, getDoc } from "firebase/firestore";
-import { onAuthStateChanged } from "firebase/auth";
+"use client"
+import Sideheader from '@/Components/Sideheader';
+import React, { useState } from 'react';
 
-const User = () => {
-  const router = useRouter();
-  const [selectedCollege, setSelectedCollege] = useState("");
-  const [name, setName] = useState("");
-  const [number, setNumber] = useState("");
-  const [errors, setErrors] = useState({ name: false, number: false, college: false });
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true); // ✅ Added loading state
+const Home = () => {
+    
+    const [college, setCollege] = useState("");
+    const [sortOrder, setSortOrder] = useState("");
+    const [category, setCategory] = useState("");
 
-  const colleges = [
-    "Marwadi University",
-    "Atmiya University",
-    "RK University",
-    "Darshan University",
-    "VVP Engineering College",
-    "Christ College",
-    "Gardi Vidyapith",
-    "Government Engineering College Rajkot",
-    "Saurashtra University",
-    "Om Engineering College",
-  ];
+    const colleges = [
+        "Marwadi University",
+        "Atmiya University",
+        "RK University",
+        "Darshan University",
+        "VVP Engineering College",
+        "Christ College",
+        "Gardi Vidyapith",
+        "Government Engineering College Rajkot",
+        "Saurashtra University",
+        "Om Engineering College"
+    ];
+    const categories = [
+        "Electronics",
+        "Wallet",
+        "Jewellery",
+        "Documents",
+        "Clothing",
+        "Other"
+    ];
 
-  // ✅ Watch for auth changes
-  useEffect(() => {
-    const unsub = onAuthStateChanged(auth, async (currentUser) => {
-      if (!currentUser) {
-        setUser(null);
-        setLoading(false);
-        router.push("/"); // Redirect to login if not signed in
-        return;
-      }
+    let posts = [
+        {status:'Lost',category:'elctonic',title:'Buds',time:'9/10/2025  10:20:89'},
+        {status:'Lost',category:'elctonic',title:'Buds',time:'9/10/2025  10:20:89'},
+        {status:'Lost',category:'elctonic',title:'Buds',time:'9/10/2025  10:20:89'},
+        {status:'Lost',category:'elctonic',title:'Buds',time:'9/10/2025  10:20:89'},
+        {status:'Lost',category:'elctonic',title:'Buds',time:'9/10/2025  10:20:89'}
+    ]
 
-      setUser(currentUser);
+    const post = posts.map((post,index) => {
+        return <div  key={index} className='flex items-center justify-center p-5 rounded-2xl border m-5'>
+            <img src='/assets/logo.png' className='h-60 w-60' />
+            <div className='flex flex-col text-black font-bold text-2xl h-full'>
+                <h5 className='text-right mb-10 text-xl font-medium'>
+                    {post.status}
+                </h5>
+                
+                <div>
+                <h2>
+                    Category : {post.category}
+                </h2>
 
-      try {
-        const userRef = doc(db, "users", currentUser.uid);
-        const snap = await getDoc(userRef);
+                <h2>
+                    Title : {post.title}
+                </h2>
 
-        if (snap.exists()) {
-          const data = snap.data();
-          // ✅ Redirect if all details already exist
-          if (data.name && data.number && data.college) {
-            router.push("/Home");
-            return;
-          }
-        }
-      } catch (err) {
-        console.error("Error fetching user data:", err);
-      }
-
-      setLoading(false);
+                <h2>
+                    Date & Time : {post.time}
+                </h2>
+                </div>
+            </div>
+        </div>;
     });
 
-    return () => unsub();
-  }, [router]);
+    return <>
+        <div className='bg-gray-300 grid grid-cols-4'>
+            <Sideheader/>
 
-  // ✅ Handle form submit
-  const handleData = async (e) => {
-    e.preventDefault();
-    if (!user) return;
+            <div className='col-start-2 col-end-5 flex flex-col items-center'>
+                <div className='flex m-5 p-5 gap-5 items-center justify-center'>
+                    <div className="text-white border border-black rounded">
+                        <select
+                        value={college}
+                        onChange={(e) => setCollege(e.target.value)}
+                        className="p-2 rounded-md text-black border-2 border-gray-300 focus:border-black outline-none w-50"
+                        >
+                        <option value="">-- Select College --</option>
+                        {colleges.map((clg, index) => (
+                            <option key={index} value={clg}>
+                            {clg}
+                            </option>
+                        ))}
+                        </select>
+                    </div>
 
-    const newErrors = {
-      name: name.trim() === "",
-      number: !/^\d{10}$/.test(number),
-      college: selectedCollege === "",
-    };
-    setErrors(newErrors);
+                    {/* Sort By Time Dropdown */}
+                    <div className="text-white border border-black rounded">
+                        <select
+                        value={sortOrder}
+                        onChange={(e) => setSortOrder(e.target.value)}
+                        className="p-2 rounded-md text-black border-2 border-gray-300 focus:border-black outline-none w-50"
+                        >
+                        <option value="">-- Select Order --</option>
+                        <option value="asc">Ascending</option>
+                        <option value="desc">Descending</option>
+                        </select>
+                    </div>
 
-    if (Object.values(newErrors).some((err) => err)) return;
-
-    try {
-      const ref = doc(db, "users", user.uid);
-      const snap = await getDoc(ref);
-      if (snap.exists()) {
-        await updateDoc(ref, {
-          name,
-          number,
-          college: selectedCollege,
-        });
-
-        alert("Details saved successfully!");
-        router.push("/home"); // ✅ Redirect to Home page
-      } else {
-        alert("User record not found. Please sign in again.");
-      }
-
-      // Reset form
-      setSelectedCollege("");
-      setName("");
-      setNumber("");
-    } catch (err) {
-      console.error("Firestore error:", err);
-      alert("Failed to save details. Try again.");
-    }
-  };
-
-  if (loading) {
-    return (
-      <div className="h-screen flex items-center justify-center text-lg">
-        Loading...
-      </div>
-    );
-  }
-
-  if (!user) {
-    return (
-      <div className="h-screen flex items-center justify-center text-red-500 text-lg">
-        Please sign in first.
-      </div>
-    );
-  }
-
-  return (
-    <div className="min-h-screen w-full bg-gray-200 flex items-center justify-center p-4">
-      <div className="bg-white flex flex-col md:flex-row rounded-2xl shadow-2xl shadow-black w-full max-w-6xl overflow-hidden">
-        
-        {/* Image Section */}
-        <div className="md:flex-1 w-full h-64 md:h-auto">
-          <img
-            src="/assets/registration.jpg"
-            alt="Registration"
-            className="w-full h-full object-cover rounded-t-2xl md:rounded-t-none md:rounded-l-2xl"
-          />
+                    {/* Filter by Category Dropdown */}
+                    <div className="text-white border border-black rounded">
+                        <select
+                        value={category}
+                        onChange={(e) => setCategory(e.target.value)}
+                        className="p-2 rounded-md text-black border-2 border-gray-300 focus:border-black outline-none"
+                        >
+                        <option value="">-- Select Category --</option>
+                        {categories.map((cat, index) => (
+                            <option key={index} value={cat}>
+                            {cat}
+                            </option>
+                        ))}
+                        </select>
+                    </div>
+                </div>
+                <div className='h-300 overflow-y-auto pb-50' style={{scrollbarWidth: 'none'}}>
+                    {post}
+                </div>
+            </div>
         </div>
+    </>;
+}
 
-        {/* Form Section */}
-        <div className="md:flex-1 flex flex-col justify-center items-center p-6 md:p-10">
-          <h1 className="text-2xl sm:text-3xl md:text-4xl font-medium mb-6 text-center">
-            Enter Your Details
-          </h1>
-
-          <form className="flex flex-col w-full max-w-md" onSubmit={handleData}>
-            {/* Name */}
-            <div className="mb-3 w-full">
-              <span className={`text-red-500 text-sm mb-1 block ${!errors.name && "invisible"}`}>
-                Name is required
-              </span>
-              <input
-                type="text"
-                className={`border-2 ${errors.name ? "border-red-500" : "border-gray-400"} h-12 rounded-md w-full px-4 text-base sm:text-lg focus:border-blue-500 outline-none transition-colors duration-300`}
-                placeholder="Enter Your Name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-              />
-            </div>
-
-            {/* Contact Number */}
-            <div className="mb-3 w-full">
-              <span className={`text-red-500 text-sm mb-1 block ${!errors.number && "invisible"}`}>
-                Enter a valid 10-digit number
-              </span>
-              <input
-                type="text"
-                className={`border-2 ${errors.number ? "border-red-500" : "border-gray-400"} h-12 rounded-md w-full px-4 text-base sm:text-lg focus:border-blue-500 outline-none transition-colors duration-300`}
-                placeholder="Enter Your Contact Number"
-                value={number}
-                onChange={(e) => setNumber(e.target.value)}
-              />
-            </div>
-
-            {/* College Selection */}
-            <div className="mb-3 w-full">
-              <span className={`text-red-500 text-sm mb-1 block ${!errors.college && "invisible"}`}>
-                Please select a college
-              </span>
-              <select
-                value={selectedCollege}
-                onChange={(e) => setSelectedCollege(e.target.value)}
-                className={`border-2 ${errors.college ? "border-red-500" : "border-gray-400"} h-12 rounded-md w-full px-4 text-base sm:text-lg focus:border-blue-500 outline-none transition-colors duration-300`}
-              >
-                <option value="">-- Choose a College --</option>
-                {colleges.map((college, index) => (
-                  <option key={index} value={college}>
-                    {college}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <button
-              type="submit"
-              className="text-base sm:text-lg md:text-xl font-medium w-full h-12 bg-blue-400 rounded-full hover:bg-blue-500 active:scale-95 transition-all duration-200 mt-3"
-            >
-              Submit
-            </button>
-          </form>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-export default User;
+export default Home
