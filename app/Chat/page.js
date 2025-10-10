@@ -13,7 +13,9 @@ import {
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import Sideheader from "@/Components/Sideheader";
 
-export default function ChatPage() {
+export default function ChatPage({ searchParams }) {
+  // const { otherUser: initialOtherUser, itemImage: initialItemImage } =
+  //   searchParams || {};
   const currentUser = auth.currentUser?.email;
   const [chatUsers, setChatUsers] = useState([]);
   const [selectedUser, setSelectedUser] = useState(null);
