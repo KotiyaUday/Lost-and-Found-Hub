@@ -22,7 +22,7 @@ const Sideheader = () => {
                     <span className="font-medium text-black">Search</span>
                 </Link>
 
-                <Link href='#' className="flex items-center gap-3 hover:scale-95 active:scale-105">
+                <Link href='/Add_Post' className="flex items-center gap-3 hover:scale-95 active:scale-105">
                     <img src="https://cdn-icons-png.flaticon.com/512/6537/6537820.png" alt="Home" className="w-6 h-6"/>
                     <span className="font-medium text-black">Add Post</span>
                 </Link>

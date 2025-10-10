@@ -1,17 +1,18 @@
 "use client";
 import React, { useState, useEffect } from "react";
-import { useRouter } from "next/navigation"; // ✅ Import this
+import { useRouter } from "next/navigation";
 import { auth, db } from "../../lib/firebase";
-import { doc, setDoc, getDoc } from "firebase/firestore";
+import { doc, updateDoc, getDoc } from "firebase/firestore";
 import { onAuthStateChanged } from "firebase/auth";
 
 const User = () => {
-  const router = useRouter(); // ✅ Initialize router
+  const router = useRouter();
   const [selectedCollege, setSelectedCollege] = useState("");
   const [name, setName] = useState("");
   const [number, setNumber] = useState("");
   const [errors, setErrors] = useState({ name: false, number: false, college: false });
   const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true); // ✅ Added loading state
 
   const colleges = [
     "Marwadi University",
@@ -32,6 +33,7 @@ const User = () => {
       if (!currentUser) {
         setUser(null);
         setLoading(false);
+        router.push("/"); // Redirect to login if not signed in
         return;
       }
 
@@ -45,7 +47,7 @@ const User = () => {
           const data = snap.data();
           // ✅ Redirect if all details already exist
           if (data.name && data.number && data.college) {
-            router.push("/User_Profile");
+            router.push("/Home");
             return;
           }
         }
@@ -83,11 +85,13 @@ const User = () => {
           college: selectedCollege,
         });
 
-        alert("Details updated successfully!");
+        alert("Details saved successfully!");
         router.push("/home"); // ✅ Redirect to Home page
       } else {
         alert("User record not found. Please sign in again.");
       }
+
+      // Reset form
       setSelectedCollege("");
       setName("");
       setNumber("");

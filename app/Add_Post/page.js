@@ -3,6 +3,7 @@ import React, { useState, useEffect } from "react";
 import { auth } from "../../lib/firebase";
 import { db } from "../../lib/firebase";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
+import Sideheader from "@/Components/Sideheader";
 
 const AddPost = () => {
   const [hydrated, setHydrated] = useState(false);
@@ -70,215 +71,260 @@ const AddPost = () => {
       return;
     }
 
-    const submittedData = {
-      ...form,
-      postType: activeTab,
-      category: form.category === "Other" ? form.otherCategory : form.category,
-      timestamp: new Date().toISOString(),
-    };
-
     try {
-      setSuccess("✅ Post added successfully!");
+      let imageURL = "";
+
+      // ✅ Upload image if exists
+      if (image) {
+        const formData = new FormData();
+        formData.append("image", image);
+
+        const response = await fetch("https://api.imgbb.com/1/upload?key=97d6db2b04a85a251125af9109610b31", {
+          method: "POST",
+          body: formData,
+        });
+
+        const data = await response.json();
+        if (data.success) {
+          imageURL = data.data.url;
+        } else {
+          throw new Error("Image upload failed");
+        }
+      }
+
+      // Prepare post data
+      const submittedData = {
+        ...form,
+        postType: activeTab,
+        category: form.category === "Other" ? form.otherCategory : form.category,
+        imageURL: imageURL || "", // store the uploaded image URL
+        timestamp: serverTimestamp(),
+      };
+
+      // Add document to Firestore
+      await addDoc(collection(db, "items"), submittedData);
+
+      setSuccess("Post added successfully!");
       setError("");
       resetForm();
-    } catch (error) {
-      console.error("Error adding document:", error);
-      setError("❌ Failed to add post. Please try again.");
+    } catch (err) {
+      console.error("Error adding document:", err);
+      setError("Failed to add post. Please try again.");
       setSuccess("");
     }
   };
 
   return (
-    <div className="max-w-3xl mx-auto bg-white shadow-lg rounded-xl mt-8 p-6 sm:p-8 border border-gray-200">
-      <h2 className="text-2xl sm:text-3xl font-bold text-center text-indigo-700 mb-6">
-        Add Post – Lost & Found Hub
-      </h2>
+    <div className="bg-gray-300 min-h-screen grid grid-cols-4">
+      {/* Sidebar */}
+      <Sideheader />
 
-      {!user && (
-        <p className="text-red-600 text-center font-semibold mb-4 text-sm sm:text-base">
-          Please log in to post an item
-        </p>
-      )}
+      {/* Main Content */}
+      <div className="col-span-3 p-6">
+        <div className="max-w-3xl mx-auto bg-white shadow-lg rounded-xl p-6 sm:p-8 border border-gray-200">
+          <h2 className="text-2xl sm:text-3xl font-bold text-center text-indigo-700 mb-6">
+            Add Post – Lost & Found Hub
+          </h2>
 
-      {/* Tabs */}
-      <div className="flex flex-col sm:flex-row justify-center mb-5 gap-2 sm:gap-0">
-        <button
-          onClick={() => setActiveTab("lost")}
-          className={`px-5 py-2 rounded-lg sm:rounded-l-lg ${
-            activeTab === "lost"
-              ? "bg-blue-600 text-white"
-              : "bg-gray-200 text-gray-800 hover:bg-gray-300"
-          }`}
-        >
-          Lost Item
-        </button>
-        <button
-          onClick={() => setActiveTab("found")}
-          className={`px-5 py-2 rounded-lg sm:rounded-r-lg ${
-            activeTab === "found"
-              ? "bg-green-600 text-white"
-              : "bg-gray-200 text-gray-800 hover:bg-gray-300"
-          }`}
-        >
-          Found Item
-        </button>
-      </div>
-
-      {/* Form */}
-      <form
-        onSubmit={handleSubmit}
-        className="bg-gray-50 p-5 sm:p-6 rounded-lg shadow-inner space-y-5"
-      >
-        {/* Title */}
-        <div>
-          <label className="block font-medium mb-1 text-gray-700">
-            Title *
-          </label>
-          <input
-            type="text"
-            name="title"
-            value={form.title}
-            onChange={handleChange}
-            className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-indigo-500"
-            placeholder={activeTab === "lost" ? "E.g., Lost Wallet" : "E.g., Found Mobile Phone"}
-            required
-          />
-        </div>
-
-        {/* Description */}
-        <div>
-          <label className="block font-medium mb-1 text-gray-700">
-            Description *
-          </label>
-          <textarea
-            name="description"
-            value={form.description}
-            onChange={handleChange}
-            className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-indigo-500"
-            placeholder="Provide details like color, brand, unique marks..."
-            required
-          />
-        </div>
-
-        {/* Location + Date */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5">
-          <div>
-            <label className="block font-medium mb-1 text-gray-700">Location *</label>
-            <input
-              type="text"
-              name="location"
-              value={form.location}
-              onChange={handleChange}
-              className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-indigo-500"
-              placeholder="Where it was lost/found"
-              required
-            />
-          </div>
-          <div>
-            <label className="block font-medium mb-1 text-gray-700">Date *</label>
-            <input
-              type="date"
-              name="date"
-              value={form.date}
-              onChange={handleChange}
-              className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-indigo-500"
-              required
-            />
-          </div>
-        </div>
-
-        {/* Category */}
-        <div>
-          <label className="block font-medium mb-1 text-gray-700">Category *</label>
-          <select
-            name="category"
-            value={form.category}
-            onChange={handleChange}
-            className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-indigo-500"
-            required
-          >
-            <option value="">Select category</option>
-            <option value="Electronics">Electronics</option>
-            <option value="Wallet">Wallet</option>
-            <option value="Jewelry">Jewelry</option>
-            <option value="Documents">Documents</option>
-            <option value="Clothing">Clothing</option>
-            <option value="Other">Other</option>
-          </select>
-        </div>
-
-        {/* Other Category */}
-        {form.category === "Other" && (
-          <div>
-            <label className="block font-medium mb-1 text-gray-700">
-              Enter Category Name *
-            </label>
-            <input
-              type="text"
-              name="otherCategory"
-              value={form.otherCategory}
-              onChange={handleChange}
-              className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-indigo-500"
-              placeholder="Enter your category name"
-              required
-            />
-          </div>
-        )}
-
-        {/* Contact Info */}
-        <div>
-          <label className="block font-medium mb-1 text-gray-700">Contact Info *</label>
-          <input
-            type="text"
-            name="contact"
-            value={form.contact}
-            onChange={handleChange}
-            className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-indigo-500"
-            placeholder="Phone or Email"
-            required
-          />
-        </div>
-
-        {/* Image */}
-        <div>
-          <label className="block font-medium mb-1 text-gray-700">Image</label>
-          <input
-            type="file"
-            accept="image/*"
-            onChange={handleImageChange}
-            className="w-full"
-          />
-          {image && (
-            <p className="text-sm text-gray-600 mt-1">Selected: {image.name}</p>
+          {!user && (
+            <p className="text-red-600 text-center font-semibold mb-4 text-sm sm:text-base">
+              Please log in to post an item
+            </p>
           )}
-        </div>
 
-        {/* Buttons */}
-        <div className="flex flex-col sm:flex-row justify-between items-center gap-3 sm:gap-0">
-          <button
-            type="submit"
-            disabled={!user}
-            className="w-full sm:w-auto bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2 rounded-lg shadow-md transition disabled:opacity-50"
-          >
-            Add Post
-          </button>
-          <button
-            type="button"
-            onClick={resetForm}
-            className="w-full sm:w-auto bg-gray-300 hover:bg-gray-400 px-5 py-2 rounded-lg shadow-sm transition"
-          >
-            Reset
-          </button>
-        </div>
+          {/* Tabs */}
+          <div className="flex flex-col sm:flex-row justify-center mb-5 gap-2 sm:gap-0">
+            <button
+              onClick={() => setActiveTab("lost")}
+              className={`px-5 py-2 rounded-lg sm:rounded-l-lg ${
+                activeTab === "lost"
+                  ? "bg-blue-600 text-white"
+                  : "bg-gray-200 text-gray-800 hover:bg-gray-300"
+              }`}
+            >
+              Lost Item
+            </button>
+            <button
+              onClick={() => setActiveTab("found")}
+              className={`px-5 py-2 rounded-lg sm:rounded-r-lg ${
+                activeTab === "found"
+                  ? "bg-green-600 text-white"
+                  : "bg-gray-200 text-gray-800 hover:bg-gray-300"
+              }`}
+            >
+              Found Item
+            </button>
+          </div>
 
-        {/* Messages */}
-        {success && (
-          <p className="text-green-600 font-medium text-center mt-4">{success}</p>
-        )}
-        {error && (
-          <p className="text-red-600 font-medium text-center mt-4">{error}</p>
-        )}
-      </form>
+          {/* Form */}
+          <form
+            onSubmit={handleSubmit}
+            className="bg-gray-50 p-5 sm:p-6 rounded-lg shadow-inner space-y-5"
+          >
+            {/* Title */}
+            <div>
+              <label className="block font-medium mb-1 text-gray-700">
+                Title *
+              </label>
+              <input
+                type="text"
+                name="title"
+                value={form.title}
+                onChange={handleChange}
+                className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-indigo-500"
+                placeholder={
+                  activeTab === "lost"
+                    ? "E.g., Lost Wallet"
+                    : "E.g., Found Mobile Phone"
+                }
+                required
+              />
+            </div>
+
+            {/* Description */}
+            <div>
+              <label className="block font-medium mb-1 text-gray-700">
+                Description *
+              </label>
+              <textarea
+                name="description"
+                value={form.description}
+                onChange={handleChange}
+                className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-indigo-500"
+                placeholder="Provide details like color, brand, unique marks..."
+                required
+              />
+            </div>
+
+            {/* Location + Date */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5">
+              <div>
+                <label className="block font-medium mb-1 text-gray-700">
+                  Location *
+                </label>
+                <input
+                  type="text"
+                  name="location"
+                  value={form.location}
+                  onChange={handleChange}
+                  className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-indigo-500"
+                  placeholder="Where it was lost/found"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block font-medium mb-1 text-gray-700">
+                  Date *
+                </label>
+                <input
+                  type="date"
+                  name="date"
+                  value={form.date}
+                  onChange={handleChange}
+                  className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-indigo-500"
+                  required
+                />
+              </div>
+            </div>
+
+            {/* Category */}
+            <div>
+              <label className="block font-medium mb-1 text-gray-700">
+                Category *
+              </label>
+              <select
+                name="category"
+                value={form.category}
+                onChange={handleChange}
+                className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-indigo-500"
+                required
+              >
+                <option value="">Select category</option>
+                <option value="Electronics">Electronics</option>
+                <option value="Wallet">Wallet</option>
+                <option value="Jewelry">Jewelry</option>
+                <option value="Documents">Documents</option>
+                <option value="Clothing">Clothing</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+
+            {/* Other Category */}
+            {form.category === "Other" && (
+              <div>
+                <label className="block font-medium mb-1 text-gray-700">
+                  Enter Category Name *
+                </label>
+                <input
+                  type="text"
+                  name="otherCategory"
+                  value={form.otherCategory}
+                  onChange={handleChange}
+                  className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-indigo-500"
+                  placeholder="Enter your category name"
+                  required
+                />
+              </div>
+            )}
+
+            {/* Contact Info */}
+            <div>
+              <label className="block font-medium mb-1 text-gray-700">
+                Contact Info *
+              </label>
+              <input
+                type="text"
+                name="contact"
+                value={form.contact}
+                onChange={handleChange}
+                className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-indigo-500"
+                placeholder="Phone or Email"
+                required
+              />
+            </div>
+
+            {/* Image */}
+            <div>
+              <label className="block font-medium mb-1 text-gray-700">Image</label>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleImageChange}
+                className="w-full"
+              />
+              {image && (
+                <p className="text-sm text-gray-600 mt-1">Selected: {image.name}</p>
+              )}
+            </div>
+
+            {/* Buttons */}
+            <div className="flex flex-col sm:flex-row justify-between items-center gap-3 sm:gap-0">
+              <button
+                type="submit"
+                disabled={!user}
+                className="w-full sm:w-auto bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2 rounded-lg shadow-md transition disabled:opacity-50"
+              >
+                Add Post
+              </button>
+              <button
+                type="button"
+                onClick={resetForm}
+                className="w-full sm:w-auto bg-gray-300 hover:bg-gray-400 px-5 py-2 rounded-lg shadow-sm transition"
+              >
+                Reset
+              </button>
+            </div>
+
+            {/* Messages */}
+            {success && (
+              <p className="text-green-600 font-medium text-center mt-4">{success}</p>
+            )}
+            {error && (
+              <p className="text-red-600 font-medium text-center mt-4">{error}</p>
+            )}
+          </form>
+        </div>
+      </div>
     </div>
   );
 };
