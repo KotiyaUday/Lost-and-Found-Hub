@@ -43,14 +43,18 @@ const Registration = () => {
 
   // ✅ Google sign-in handler
   const handleSignIn = async () => {
-    try {
-      const provider = new GoogleAuthProvider();
-      await signInWithPopup(auth, provider);
-    } catch (error) {
-      console.error(error);
-      alert("Failed to sign in. Please try again.");
-    }
-  };
+  try {
+    const provider = new GoogleAuthProvider();
+    provider.setCustomParameters({
+      prompt: "select_account" // you can also try "none" but "select_account" is safer
+    });
+    await signInWithPopup(auth, provider);
+  } catch (error) {
+    console.error("Sign-in failed:", error);
+    alert("Failed to sign in. Please try again.");
+  }
+};
+
 
   if (loading)
     return <div className="h-screen flex items-center justify-center text-lg">Loading...</div>;
