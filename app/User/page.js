@@ -1,19 +1,17 @@
-"use client"
-import Link from 'next/link';
-import React, { useState } from 'react';
+"use client";
+import React, { useState, useEffect } from "react";
+import { useRouter } from "next/navigation"; // ✅ Import this
 import { auth, db } from "../../lib/firebase";
 import { doc, updateDoc, getDoc } from "firebase/firestore";
 import { onAuthStateChanged } from "firebase/auth";
 
-
-
 const User = () => {
+  const router = useRouter(); // ✅ Initialize router
   const [selectedCollege, setSelectedCollege] = useState("");
   const [name, setName] = useState("");
   const [number, setNumber] = useState("");
   const [errors, setErrors] = useState({ name: false, number: false, college: false });
   const [user, setUser] = useState(null);
-
 
   const colleges = [
     "Marwadi University",
@@ -25,10 +23,10 @@ const User = () => {
     "Gardi Vidyapith",
     "Government Engineering College Rajkot",
     "Saurashtra University",
-    "Om Engineering College"
+    "Om Engineering College",
   ];
 
-  // Watch for auth changes
+  // ✅ Watch for auth changes
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, (currentUser) => setUser(currentUser));
     return () => unsub();
@@ -40,7 +38,7 @@ const User = () => {
     const newErrors = {
       name: name.trim() === "",
       number: !/^\d{10}$/.test(number),
-      college: selectedCollege === ""
+      college: selectedCollege === "",
     };
     setErrors(newErrors);
 
@@ -53,9 +51,11 @@ const User = () => {
         await updateDoc(ref, {
           name,
           number,
-          college: selectedCollege
+          college: selectedCollege,
         });
+
         alert("Details updated successfully!");
+        router.push("/home"); // ✅ Redirect to Home page
       } else {
         alert("User record not found. Please sign in again.");
       }
