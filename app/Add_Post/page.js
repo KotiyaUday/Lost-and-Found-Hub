@@ -29,9 +29,7 @@ const AddPost = () => {
     const unsubscribe = auth.onAuthStateChanged(async (u) => {
       setUser(u);
       if (u) {
-        // Assuming user has college stored in their profile (you can fetch from Firestore 'users' collection)
-        // Example: db.collection('users').doc(u.uid).get()
-        // For now, let's mock it as "RK University"
+        // You can fetch college info from Firestore users collection if needed
         setCollege("RK University");
       }
     });
@@ -104,9 +102,12 @@ const AddPost = () => {
         ...form,
         postType: activeTab,
         category: form.category === "Other" ? form.otherCategory : form.category,
-        imageURL: imageURL || "https://www.shutterstock.com/shutterstock/videos/1111389205/thumb/12.jpg?ip=x480",
+        imageURL:
+          imageURL ||
+          "https://www.shutterstock.com/shutterstock/videos/1111389205/thumb/12.jpg?ip=x480",
         timestamp: serverTimestamp(),
-        college: college || "Not Specified", // ✅ Add college here
+        college: college || "Not Specified",
+        userEmail: user?.email || "Anonymous", // ✅ Add current user’s email
       };
 
       await addDoc(collection(db, "items"), submittedData);

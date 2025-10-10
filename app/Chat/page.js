@@ -1,148 +1,234 @@
 "use client";
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Sideheader from "@/Components/Sideheader";
+import { db, auth } from "@/lib/firebase";
+import {
+  collection,
+  addDoc,
+  query,
+  orderBy,
+  onSnapshot,
+  doc,
+  setDoc,
+  serverTimestamp,
+  getDocs,
+} from "firebase/firestore";
 
-export default function ChatPage() {
-  // Mock user list (you can replace with Firestore users later)
-  const [users] = useState([
-    { id: 1, name: "Ravi Kumar", lastMessage: "Thanks, I got my bag!", online: true },
-    { id: 2, name: "Priya Sharma", lastMessage: "Did you find my keys?", online: false },
-    { id: 3, name: "Aman Patel", lastMessage: "Let’s meet near library.", online: true },
-  ]);
+export default function ChatPage({ searchParams }) {
+  const { otherUser: initialOtherUser, itemImage: initialItemImage } =
+    searchParams || {};
+  const currentUser = auth.currentUser?.email;
 
-  const [selectedUser, setSelectedUser] = useState(null);
-
-  const [messages, setMessages] = useState([
-    { id: 1, sender: "other", text: "Hey 👋, how can I help you?" },
-    { id: 2, sender: "me", text: "Hi! I found your wallet near the cafeteria." },
-  ]);
+  const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState("");
+  const [chatList, setChatList] = useState([]);
+  const [otherUser, setOtherUser] = useState(initialOtherUser || null);
+  const [itemImage, setItemImage] = useState(initialItemImage || null);
   const chatEndRef = useRef(null);
 
-  const sendMessage = () => {
-    if (newMessage.trim() === "") return;
-    setMessages([
-      ...messages,
-      { id: Date.now(), sender: "me", text: newMessage.trim() },
-    ]);
-    setNewMessage("");
+  const chatId =
+    currentUser && otherUser
+      ? [currentUser, otherUser].sort().join("_")
+      : null;
+
+  // 🧩 Listen to all chat rooms that current user is part of
+  useEffect(() => {
+    if (!currentUser) return;
+    const q = query(collection(db, "chats"));
+    const unsubscribe = onSnapshot(q, async (snapshot) => {
+      const chats = [];
+      snapshot.forEach((doc) => {
+        const data = doc.data();
+        if (data.participants?.includes(currentUser)) {
+          chats.push({ id: doc.id, ...data });
+        }
+      });
+      setChatList(chats);
+    });
+    return () => unsubscribe();
+  }, [currentUser]);
+
+  // 🧩 Listen to messages for the selected chat
+  useEffect(() => {
+    if (!chatId) {
+      setMessages([]);
+      return;
+    }
+    const q = query(
+      collection(db, "chats", chatId, "messages"),
+      orderBy("timestamp", "asc")
+    );
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const msgs = snapshot.docs.map((doc) => doc.data());
+      setMessages(msgs);
+    });
+    return () => unsubscribe();
+  }, [chatId]);
+
+  // 📨 Send message
+  const sendMessage = async () => {
+    if (!newMessage.trim() || !chatId) return;
+    try {
+      await setDoc(doc(db, "chats", chatId), {
+        participants: [currentUser, otherUser],
+        itemImage: itemImage || null,
+        lastMessage: newMessage.trim(),
+        updatedAt: serverTimestamp(),
+      });
+
+      await addDoc(collection(db, "chats", chatId, "messages"), {
+        sender: currentUser,
+        text: newMessage.trim(),
+        timestamp: serverTimestamp(),
+      });
+
+      setNewMessage("");
+    } catch (err) {
+      console.error("Error sending message:", err);
+    }
   };
 
+  // 🔄 Auto scroll to bottom
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
   return (
-    <div className="flex h-screen bg-gradient-to-br from-indigo-100 via-white to-indigo-50">
+    <div className="flex h-screen bg-gradient-to-br from-indigo-100 via-purple-50 to-indigo-50">
       {/* Sidebar */}
-      <div className="hidden md:block w-64 border-r bg-white shadow-md">
+      <div className="hidden md:flex flex-col w-72 border-r bg-white/70 backdrop-blur-md shadow-md">
         <Sideheader />
-      </div>
-
-      {/* Chat Layout */}
-      <div className="flex flex-1 flex-col md:flex-row">
-        {/* Left Panel: User List */}
-        <div className="w-full md:w-1/3 border-r bg-white shadow-sm">
-          <div className="p-4 border-b">
-            <h2 className="text-lg font-semibold text-indigo-700">Messages</h2>
-          </div>
-
-          <div className="overflow-y-auto h-[calc(100vh-70px)]">
-            {users.map((user) => (
-              <div
-                key={user.id}
-                onClick={() => setSelectedUser(user)}
-                className={`flex items-center justify-between p-4 cursor-pointer hover:bg-indigo-50 transition-all ${
-                  selectedUser?.id === user.id ? "bg-indigo-100" : ""
-                }`}
-              >
-                <div>
-                  <h3 className="font-semibold text-gray-800">{user.name}</h3>
-                  <p className="text-sm text-gray-500 truncate w-40">
-                    {user.lastMessage}
-                  </p>
-                </div>
-                <div
-                  className={`w-3 h-3 rounded-full ${
-                    user.online ? "bg-green-500" : "bg-gray-400"
-                  }`}
-                ></div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Right Panel: Chat Window */}
-        <div className="flex flex-col flex-1">
-          {selectedUser ? (
-            <>
-              {/* Header */}
-              <div className="p-4 bg-white border-b shadow-sm flex items-center justify-between">
-                <div>
-                  <h2 className="text-lg md:text-xl font-semibold text-indigo-700">
-                    💬 {selectedUser.name}
-                  </h2>
-                  <span
-                    className={`text-sm ${
-                      selectedUser.online ? "text-green-600" : "text-gray-500"
-                    }`}
-                  >
-                    {selectedUser.online ? "Online" : "Offline"}
-                  </span>
-                </div>
-              </div>
-
-              {/* Messages */}
-              <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3 md:px-8 md:py-5 bg-gradient-to-br from-indigo-50 via-white to-indigo-100">
-                {messages.map((msg) => (
-                  <div
-                    key={msg.id}
-                    className={`flex ${
-                      msg.sender === "me" ? "justify-end" : "justify-start"
-                    }`}
-                  >
-                    <div
-                      className={`max-w-[75%] md:max-w-[60%] px-4 py-2 rounded-2xl text-sm md:text-base shadow-md ${
-                        msg.sender === "me"
-                          ? "bg-indigo-600 text-white rounded-br-none"
-                          : "bg-gray-200 text-gray-800 rounded-bl-none"
-                      }`}
-                    >
-                      {msg.text}
-                    </div>
-                  </div>
-                ))}
-                <div ref={chatEndRef}></div>
-              </div>
-
-              {/* Input */}
-              <div className="p-3 md:p-4 border-t bg-white flex items-center space-x-3">
-                <input
-                  type="text"
-                  placeholder="Type your message..."
-                  className="flex-1 border border-gray-300 rounded-full px-4 py-2 text-sm md:text-base focus:outline-none focus:ring-2 focus:ring-indigo-400"
-                  value={newMessage}
-                  onChange={(e) => setNewMessage(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && sendMessage()}
-                />
-                <button
-                  onClick={sendMessage}
-                  className="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2 rounded-full font-medium transition-all duration-200"
-                >
-                  Send
-                </button>
-              </div>
-            </>
+        <div className="flex-1 overflow-y-auto p-3">
+          <h2 className="text-gray-600 text-sm font-semibold mb-2 px-1">
+            Recent Chats
+          </h2>
+          {chatList.length === 0 ? (
+            <p className="text-gray-400 text-sm text-center mt-6">
+              No chats yet 💬
+            </p>
           ) : (
-            // Default Empty State
-            <div className="flex-1 flex flex-col items-center justify-center text-gray-500">
-              <h2 className="text-xl font-semibold text-indigo-700">
-                Select a user to start chat 💬
-              </h2>
-              <p className="mt-2 text-sm">Your conversations will appear here.</p>
-            </div>
+            chatList.map((chat) => {
+              const chatPartner = chat.participants.find(
+                (u) => u !== currentUser
+              );
+              return (
+                <div
+                  key={chat.id}
+                  onClick={() => {
+                    setOtherUser(chatPartner);
+                    setItemImage(chat.itemImage || null);
+                  }}
+                  className={`flex items-center gap-3 p-3 rounded-xl cursor-pointer hover:bg-indigo-100 transition ${
+                    chatPartner === otherUser
+                      ? "bg-indigo-100 shadow-sm"
+                      : "bg-transparent"
+                  }`}
+                >
+                  {chat.itemImage ? (
+                    <img
+                      src={chat.itemImage}
+                      alt="Item"
+                      className="w-10 h-10 rounded-lg object-cover"
+                    />
+                  ) : (
+                    <div className="w-10 h-10 rounded-lg bg-indigo-200 flex items-center justify-center text-indigo-600 font-bold">
+                      {chatPartner?.[0]?.toUpperCase()}
+                    </div>
+                  )}
+                  <div className="flex flex-col truncate">
+                    <span className="font-semibold text-gray-800 text-sm truncate">
+                      {chatPartner}
+                    </span>
+                    <span className="text-xs text-gray-500 truncate">
+                      {chat.lastMessage || "No messages yet"}
+                    </span>
+                  </div>
+                </div>
+              );
+            })
           )}
         </div>
+      </div>
+
+      {/* Chat Section */}
+      <div className="flex flex-1 flex-col">
+        {otherUser ? (
+          <>
+            {/* Header */}
+            <div className="p-4 bg-white/70 backdrop-blur-md border-b shadow-sm flex items-center space-x-4">
+              {itemImage && (
+                <img
+                  src={itemImage}
+                  alt="Item"
+                  className="w-12 h-12 rounded-xl object-cover shadow-sm border"
+                />
+              )}
+              <div>
+                <h2 className="text-lg md:text-xl font-semibold text-indigo-700">
+                  💬 Chat with {otherUser}
+                </h2>
+                <p className="text-sm text-gray-500">Discuss this item</p>
+              </div>
+            </div>
+
+            {/* Messages */}
+            <div className="flex-1 overflow-y-auto px-4 py-3 md:px-8 md:py-6 space-y-3 bg-gradient-to-br from-indigo-50 via-white to-purple-50">
+              {messages.length === 0 && (
+                <p className="text-center text-gray-400 italic">
+                  No messages yet. Say hi 👋
+                </p>
+              )}
+              {messages.map((msg, i) => (
+                <div
+                  key={i}
+                  className={`flex ${
+                    msg.sender === currentUser
+                      ? "justify-end"
+                      : "justify-start"
+                  }`}
+                >
+                  <div
+                    className={`max-w-[75%] md:max-w-[65%] px-4 py-2 rounded-2xl text-sm md:text-base shadow-lg ${
+                      msg.sender === currentUser
+                        ? "bg-indigo-600 text-white rounded-br-none"
+                        : "bg-white/80 backdrop-blur-md border border-gray-200 text-gray-800 rounded-bl-none"
+                    }`}
+                  >
+                    {msg.text}
+                  </div>
+                </div>
+              ))}
+              <div ref={chatEndRef}></div>
+            </div>
+
+            {/* Input */}
+            <div className="p-3 md:p-4 border-t bg-white/80 backdrop-blur-md flex items-center space-x-3">
+              <input
+                type="text"
+                placeholder="Type your message..."
+                className="flex-1 border border-gray-300 rounded-full px-4 py-2 text-sm md:text-base focus:outline-none focus:ring-2 focus:ring-indigo-400 bg-white/70"
+                value={newMessage}
+                onChange={(e) => setNewMessage(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && sendMessage()}
+              />
+              <button
+                onClick={sendMessage}
+                className="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2 rounded-full font-medium shadow-md transition-all duration-200"
+              >
+                Send
+              </button>
+            </div>
+          </>
+        ) : (
+          <div className="flex-1 flex flex-col items-center justify-center text-gray-500">
+            <h2 className="text-xl md:text-2xl font-semibold text-indigo-700">
+              Select a user to start chatting 💬
+            </h2>
+            <p className="mt-2 text-sm md:text-base">
+              Your conversations will appear here.
+            </p>
+          </div>
+        )}
       </div>
     </div>
   );

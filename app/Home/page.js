@@ -1,6 +1,6 @@
 "use client";
 import React, { useEffect, useState } from "react";
-import { db } from "@/lib/firebase";
+import { db, auth } from "@/lib/firebase";
 import { collection, getDocs, orderBy, query } from "firebase/firestore";
 import Sideheader from "@/Components/Sideheader";
 
@@ -12,7 +12,7 @@ const Home = () => {
   // Filter / Sort states
   const [college, setCollege] = useState("");
   const [category, setCategory] = useState("");
-  const [sortOrder, setSortOrder] = useState(""); // "asc" or "desc"
+  const [sortOrder, setSortOrder] = useState("");
 
   // Dropdown options
   const [colleges, setColleges] = useState([]);
@@ -23,6 +23,7 @@ const Home = () => {
       try {
         const q = query(collection(db, "items"), orderBy("timestamp", "desc"));
         const snapshot = await getDocs(q);
+        const currentUserEmail = auth.currentUser?.email || "";
 
         const data = snapshot.docs.map((doc) => {
           const docData = doc.data();
@@ -30,7 +31,7 @@ const Home = () => {
             id: doc.id,
             title: docData.title || "Unnamed Item",
             image: docData.imageURL || "https://i.ibb.co/MDMk4K6v/6f14784a35f5.jpg",
-            postType: docData.postType || "found", 
+            postType: docData.postType || "found",
             status: docData.postType === "lost" ? "Lost" : "Found",
             category: docData.category || docData.otherCategory || "Other",
             college: docData.college || "Not Specified",
@@ -39,21 +40,19 @@ const Home = () => {
             description: docData.description || "",
             time: docData.date || "Not Available",
             timestamp: docData.timestamp || null,
+            userEmail: docData.userEmail || "", // store who posted
           };
         });
 
+        // 🔥 Hide current user's own posts
+        const filteredData = data.filter((item) => item.userEmail !== currentUserEmail);
 
-        setItems(data);
+        setItems(filteredData);
 
-        // Extract unique colleges and categories for dropdowns
-        const uniqueColleges = Array.from(new Set(data.map((item) => item.college))).filter(
-          (c) => c
-        );
+        // Extract dropdown values
+        const uniqueColleges = Array.from(new Set(filteredData.map((i) => i.college))).filter(Boolean);
+        const uniqueCategories = Array.from(new Set(filteredData.map((i) => i.category))).filter(Boolean);
         setColleges(uniqueColleges);
-
-        const uniqueCategories = Array.from(
-          new Set(data.map((item) => item.category))
-        ).filter((c) => c);
         setCategories(uniqueCategories);
       } catch (error) {
         console.error("Error fetching items:", error);
@@ -65,7 +64,7 @@ const Home = () => {
     fetchItems();
   }, []);
 
-  // Apply filters and sorting
+  // Apply filters & sorting
   const filteredItems = items
     .filter((item) => (college ? item.college === college : true))
     .filter((item) => (category ? item.category === category : true))
@@ -85,7 +84,7 @@ const Home = () => {
 
   return (
     <div className="flex min-h-screen bg-gradient-to-b from-blue-50 to-indigo-100">
-      {/* Sticky Sidebar */}
+      {/* Sidebar */}
       <div className="flex-shrink-0 sticky top-0 h-screen">
         <Sideheader />
       </div>
@@ -96,9 +95,8 @@ const Home = () => {
           🧭 Explore Lost & Found Items
         </h1>
 
-        {/* 🔹 Filters & Sorting */}
+        {/* 🔹 Filters */}
         <div className="flex flex-wrap justify-center gap-5 mb-6 w-full">
-          {/* College Dropdown */}
           <select
             value={college}
             onChange={(e) => setCollege(e.target.value)}
@@ -112,7 +110,6 @@ const Home = () => {
             ))}
           </select>
 
-          {/* Sort Dropdown */}
           <select
             value={sortOrder}
             onChange={(e) => setSortOrder(e.target.value)}
@@ -123,7 +120,6 @@ const Home = () => {
             <option value="desc">Descending</option>
           </select>
 
-          {/* Category Dropdown */}
           <select
             value={category}
             onChange={(e) => setCategory(e.target.value)}
@@ -138,7 +134,7 @@ const Home = () => {
           </select>
         </div>
 
-        {/* 🔹 Cards Grid */}
+        {/* 🔹 Item Cards */}
         <div className="w-full grid gap-8 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 px-4">
           {filteredItems.map((item) => (
             <div
@@ -190,12 +186,14 @@ const Home = () => {
           ))}
 
           {filteredItems.length === 0 && (
-            <p className="text-center text-gray-600 col-span-full">No items found.</p>
+            <p className="text-center text-gray-600 col-span-full">
+              No items found.
+            </p>
           )}
         </div>
       </div>
 
-      {/* Modal Popup */}
+      {/* 🔹 Modal Popup */}
       {selectedPost && (
         <div className="fixed inset-0 flex items-center justify-center z-50 p-4 md:p-8">
           <div
@@ -236,33 +234,47 @@ const Home = () => {
 
               <div className="flex flex-wrap gap-4 text-gray-700 text-sm md:text-base">
                 <p>
-                  <span className="font-medium text-gray-800">Category:</span> {selectedPost.category}
+                  <span className="font-medium text-gray-800">Category:</span>{" "}
+                  {selectedPost.category}
                 </p>
                 <p>
-                  <span className="font-medium text-gray-800">College:</span> {selectedPost.college || "Not Specified"}
+                  <span className="font-medium text-gray-800">College:</span>{" "}
+                  {selectedPost.college || "Not Specified"}
                 </p>
               </div>
 
               <div className="flex flex-wrap gap-4 text-gray-700 text-sm md:text-base">
                 <p>
-                  <span className="font-medium text-gray-800">Location:</span> {selectedPost.location}
+                  <span className="font-medium text-gray-800">Location:</span>{" "}
+                  {selectedPost.location}
                 </p>
                 <p>
-                  <span className="font-medium text-gray-800">Contact:</span> {selectedPost.contact}
+                  <span className="font-medium text-gray-800">Contact:</span>{" "}
+                  {selectedPost.contact}
                 </p>
               </div>
 
               <p className="text-gray-700 text-sm md:text-base">
-                <span className="font-medium text-gray-800">Date:</span> {selectedPost.time || "Not Available"}
+                <span className="font-medium text-gray-800">Date:</span>{" "}
+                {selectedPost.time || "Not Available"}
               </p>
 
               <p className="text-gray-700 text-sm md:text-base">
-                <span className="font-medium text-gray-800">Description:</span> {selectedPost.description}
+                <span className="font-medium text-gray-800">Description:</span>{" "}
+                {selectedPost.description}
               </p>
 
-              <button className="mt-5 w-full bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600 transition-all duration-300">
+              {/* Show Message Button only if Lost */}
+              {selectedPost.postType === "lost" && (
+                <button
+                onClick={() =>
+                  window.location.href = `/Chat?otherUser=${selectedPost.userEmail}&itemImage=${selectedPost.image}`
+                }
+                className="mt-5 w-full bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600 transition-all duration-300"
+              >
                 Send Message to Owner
               </button>
+              )}
             </div>
           </div>
         </div>
