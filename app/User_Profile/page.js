@@ -1,48 +1,58 @@
 "use client";
 import React from "react";
+import { User, Mail, Phone, Building } from "lucide-react"; // icons
 
 const UserProfile = () => {
   return (
-    <div className="min-h-screen w-full bg-gray-200 flex items-center justify-center px-4 py-6">
-      {/* Profile Card */}
-      <div className="bg-white flex flex-col md:flex-row items-center md:items-start p-6 md:p-10 rounded-2xl shadow-2xl shadow-black max-w-4xl w-full">
+    <div className="min-h-screen w-full bg-gray-200 flex flex-col md:flex-row">
+      
+      {/* LEFT SIDE - EMPTY AREA */}
+      <div className="flex-1 hidden md:block"></div>
+
+      {/* RIGHT SIDE - PROFILE PANEL */}
+      <div className="w-full md:w-1/3 bg-white shadow-2xl p-8 flex flex-col items-center text-center md:text-left md:items-start space-y-6 rounded-t-2xl md:rounded-none md:rounded-l-3xl">
         
-        {/* LEFT - User Image */}
-        <div className="flex-1 flex justify-center mb-6 md:mb-0">
+        {/* User Image */}
+        <div className="flex flex-col items-center md:items-start w-full">
           <img
-            src="/assets/user-placeholder.jpg"
-            alt="User"
-            className="w-32 h-32 sm:w-40 sm:h-40 md:w-48 md:h-48 rounded-full object-cover shadow-lg"
+            src="https://via.placeholder.com/120"
+            alt="User Profile"
+            className="w-28 h-28 rounded-full object-cover border-4 border-blue-500 shadow-md"
           />
         </div>
 
-        {/* RIGHT - User Info */}
-        <div className="flex-1 flex flex-col items-center md:items-start text-center md:text-left justify-center space-y-4">
+        {/* User Info */}
+        <div className="w-full space-y-4 text-gray-700 text-base">
+          
           {/* Name */}
-          <div>
-            <p className="text-gray-700 text-lg sm:text-xl md:text-2xl font-semibold">John Doe</p>
+          <div className="flex items-center space-x-3">
+            <User className="text-blue-600 w-5 h-5" />
+            <span className="font-semibold text-lg text-gray-800">John Doe</span>
           </div>
 
-          {/* College Name */}
-          <div>
-            <p className="text-gray-600 text-sm sm:text-base md:text-lg">ABC College of Engineering</p>
+          {/* College */}
+          <div className="flex items-center space-x-3">
+            <Building className="text-blue-600 w-5 h-5" />
+            <span>Marwadi University</span>
           </div>
 
           {/* Email */}
-          <div>
-            <p className="text-gray-600 text-sm sm:text-base md:text-lg">johndoe@example.com</p>
+          <div className="flex items-center space-x-3">
+            <Mail className="text-blue-600 w-5 h-5" />
+            <span>johndoe@example.com</span>
           </div>
 
-          {/* Contact */}
-          <div>
-            <p className="text-gray-600 text-sm sm:text-base md:text-lg">+91 9876543210</p>
+          {/* Mobile */}
+          <div className="flex items-center space-x-3">
+            <Phone className="text-blue-600 w-5 h-5" />
+            <span>+91 9876543210</span>
           </div>
-
-          {/* Edit Profile Button */}
-          <button className="mt-4 bg-white border border-black rounded-lg px-6 py-3 hover:shadow-xl active:scale-95 transition flex items-center justify-center text-gray-700 font-medium">
-            Edit Profile
-          </button>
         </div>
+
+        {/* Edit Button */}
+        <button className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition-all duration-200 shadow-md">
+          Edit Profile
+        </button>
       </div>
     </div>
   );
