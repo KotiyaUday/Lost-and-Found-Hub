@@ -5,7 +5,7 @@ import UserProfile from '@/app/User_Profile/page';
 
 const Sideheader = () => {
     return <>
-        <div className='flex h-screen w-80 flex-col justify-start p-5 bg-gray-200 rounded-2xl border-2 shadow-2xl shadow-black'>
+        <div className='flex h-screen w-80 flex-col justify-start p-5 bg-slate-400 text-white rounded-r-4xl shadow-2xl shadow-gray-400'>
 
             <div className=' w-full flex items-center justify-center'>
                 <img src='/assets/logo.png' className='h-60 w-60' />
@@ -13,28 +13,28 @@ const Sideheader = () => {
 
             <div className='flex flex-col justify-center w-full h-100 text-2xl gap-5'>
                 <Link href='/Home' className="flex items-center gap-3 hover:scale-95 active:scale-105">
-                    <img src="https://www.svgrepo.com/show/22031/home-icon-silhouette.svg" alt="Home" className="w-6 h-6"/>
-                    <span className="font-medium text-black">Home</span>
+                    <img src="https://static.vecteezy.com/system/resources/previews/021/948/181/non_2x/3d-home-icon-free-png.png" alt="Home" className="w-6 h-6"/>
+                    <span className="font-medium">Home</span>
                 </Link>
 
                 <Link href='#' className="flex items-center gap-3 hover:scale-95 active:scale-105">
-                    <img src="https://cdn-icons-png.flaticon.com/512/61/61088.png" alt="Home" className="w-6 h-6"/>
-                    <span className="font-medium text-black">Search</span>
+                    <img src="https://cdn-icons-png.flaticon.com/512/11741/11741045.png" alt="Home" className="w-6 h-6"/>
+                    <span className="font-medium">Search</span>
                 </Link>
 
                 <Link href='#' className="flex items-center gap-3 hover:scale-95 active:scale-105">
-                    <img src="https://cdn-icons-png.flaticon.com/512/6537/6537820.png" alt="Home" className="w-6 h-6"/>
-                    <span className="font-medium text-black">Add Post</span>
+                    <img src="https://cdn-icons-png.flaticon.com/512/11741/11741042.png" alt="Home" className="w-6 h-6"/>
+                    <span className="font-medium">Add Post</span>
                 </Link>
 
                 <Link href='#' className="flex items-center gap-3 hover:scale-95 active:scale-105">
-                    <img src="https://www.svgrepo.com/show/380090/send-message-dm.svg" alt="Home" className="w-6 h-6"/>
-                    <span className="font-medium text-black">Message</span>
+                    <img src="https://cdn-icons-png.flaticon.com/512/526/526901.png" alt="Home" className="w-6 h-6"/>
+                    <span className="font-medium">Message</span>
                 </Link>
 
                 <Link href='/User_Profile' className="flex items-center gap-3 hover:scale-95 active:scale-105">
-                    <img src="https://www.svgrepo.com/show/343494/profile-user-account.svg" alt="User Profile" className="w-6 h-6"/>
-                    <span className="font-medium text-black">Profile</span>
+                    <img src="https://cdn-icons-png.flaticon.com/512/5337/5337039.png" alt="User Profile" className="w-6 h-6"/>
+                    <span className="font-medium">Profile</span>
                 </Link>
             </div>
 

@@ -1,54 +1,98 @@
 "use client";
 import React from "react";
+import { User, Mail, Phone, Building } from "lucide-react";
 import Sideheader from "@/Components/Sideheader";
 
 const UserProfile = () => {
-  return (
-    <div className='bg-gray-300 grid grid-cols-4 '>
-      <Sideheader/>
-      <div className="min-h-screen w-full flex items-center justify-center px-4 py-6 col-span-3">
-        {/* Profile Card */}
-        <div className="bg-white flex flex-col md:flex-row items-center md:items-start p-6 md:p-10 rounded-2xl shadow-2xl shadow-black max-w-4xl w-full">
+  // Sample posts
+  const posts = [
+    "https://via.placeholder.com/200",
+    "https://via.placeholder.com/201",
+    "https://via.placeholder.com/202",
+    "https://via.placeholder.com/203",
+    "https://via.placeholder.com/204",
+    "https://via.placeholder.com/205",
+    "https://via.placeholder.com/206",
+    "https://via.placeholder.com/207",
+  ];
 
-          {/* LEFT - User Image */}
-          <div className="flex-1 flex justify-center mb-6 md:mb-0">
-            <img
-              src="/assets/user-placeholder.jpg"
-              alt="User"
-              className="w-32 h-32 sm:w-40 sm:h-40 md:w-48 md:h-48 rounded-full object-cover shadow-lg"
-            />
+  return (
+    <>
+    <div className="bg-gray-100 grid grid-cols-4 min-h-screen">
+        <Sideheader />
+
+    <div className="min-h-screen w-full bg-gray-100 flex flex-col items-center">
+      
+      {/* Profile Section */}
+      <div className="w-full max-w-4xl flex flex-col md:flex-row items-center mt-6 px-4">
+        
+        {/* LEFT SIDE - Image */}
+        <div className="flex justify-center md:justify-start md:w-1/3 mb-6 md:mb-0">
+          <img
+            src="https://via.placeholder.com/150"
+            alt="User Profile"
+            className="w-36 h-36 rounded-full object-cover border-4 border-blue-500"
+          />
+        </div>
+
+        {/* RIGHT SIDE - Details */}
+        <div className="flex-1 flex flex-col md:pl-8 items-center md:items-start space-y-3 text-gray-800">
+          <div className="flex items-center space-x-3">
+            <User className="text-blue-600 w-5 h-5" />
+            <span className="font-semibold text-2xl">John Doe</span>
           </div>
 
-          {/* RIGHT - User Info */}
-          <div className="flex-1 flex flex-col items-center md:items-start text-center md:text-left justify-center space-y-4">
-            {/* Name */}
-            <div>
-              <p className="text-gray-700 text-lg sm:text-xl md:text-2xl font-semibold">John Doe</p>
-            </div>
+          <div className="flex items-center space-x-3 text-gray-700">
+            <Building className="text-blue-600 w-5 h-5" />
+            <span>Marwadi University</span>
+          </div>
 
-            {/* College Name */}
-            <div>
-              <p className="text-gray-600 text-sm sm:text-base md:text-lg">ABC College of Engineering</p>
-            </div>
+          <div className="flex items-center space-x-3 text-gray-700">
+            <Mail className="text-blue-600 w-5 h-5" />
+            <span>johndoe@example.com</span>
+          </div>
 
-            {/* Email */}
-            <div>
-              <p className="text-gray-600 text-sm sm:text-base md:text-lg">johndoe@example.com</p>
-            </div>
+          <div className="flex items-center space-x-3 text-gray-700">
+            <Phone className="text-blue-600 w-5 h-5" />
+            <span>+91 9876543210</span>
+          </div>
 
-            {/* Contact */}
-            <div>
-              <p className="text-gray-600 text-sm sm:text-base md:text-lg">+91 9876543210</p>
-            </div>
-
-            {/* Edit Profile Button */}
-            <button className="mt-4 bg-white border border-black rounded-lg px-6 py-3 hover:shadow-xl active:scale-95 transition flex items-center justify-center text-gray-700 font-medium">
+          {/* Buttons */}
+          <div className="flex space-x-4 mt-3">
+             <button className="px-6 py-2 bg-gray-300 text-gray-800 rounded-lg hover:bg-gray-400 transition-all duration-200">
               Edit Profile
             </button>
           </div>
         </div>
       </div>
+
+      {/* Horizontal Filter Buttons */}
+      <div className="flex justify-center space-x-50 mt-18">
+         <button className="px-6 py-2 bg-gray-300 text-gray-800 rounded-lg hover:bg-gray-400 transition-all duration-200">
+          Lost Items
+        </button>
+        <button className="px-6 py-2 bg-gray-300 text-gray-800 rounded-lg hover:bg-gray-400 transition-all duration-200">
+          Found Items
+        </button>
+         <button className="px-6 py-2 bg-gray-300 text-gray-800 rounded-lg hover:bg-gray-400 transition-all duration-200">
+          Total Items
+        </button>
+      </div>
+
+      {/* Posts Section */}
+      <div className="w-full max-w-6xl mt-8 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 px-4">
+        {posts.map((post, index) => (
+          <img
+            key={index}
+            src={post}
+            alt={`Post ${index + 1}`}
+            className="w-full h-48 object-cover rounded-lg hover:scale-105 transition-transform duration-200"
+          />
+        ))}
+      </div>
     </div>
+    </div>
+    </>
   );
 };
 
