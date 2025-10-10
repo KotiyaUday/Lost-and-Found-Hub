@@ -1,11 +1,9 @@
 import Link from 'next/link';
 import React from 'react';
-import Home from '@/app/Home/page';
-import UserProfile from '@/app/User_Profile/page';
 
 const Sideheader = () => {
     return <>
-        <div className='flex h-screen w-80 flex-col justify-start p-5 bg-slate-400 text-white rounded-r-4xl shadow-2xl shadow-gray-400'>
+        <div className='flex h-screen w-80 flex-col justify-start p-5 bg-slate-400 text-white rounded-r-4xl shadow-2xl shadow-gray-400 sticky left-0'>
 
             <div className=' w-full flex items-center justify-center'>
                 <img src='/assets/logo.png' className='h-60 w-60' />
@@ -22,12 +20,12 @@ const Sideheader = () => {
                     <span className="font-medium">Search</span>
                 </Link>
 
-                <Link href='#' className="flex items-center gap-3 hover:scale-95 active:scale-105">
+                <Link href='/Add_Post' className="flex items-center gap-3 hover:scale-95 active:scale-105">
                     <img src="https://cdn-icons-png.flaticon.com/512/11741/11741042.png" alt="Home" className="w-6 h-6"/>
                     <span className="font-medium">Add Post</span>
                 </Link>
 
-                <Link href='#' className="flex items-center gap-3 hover:scale-95 active:scale-105">
+                <Link href='/Message' className="flex items-center gap-3 hover:scale-95 active:scale-105">
                     <img src="https://cdn-icons-png.flaticon.com/512/526/526901.png" alt="Home" className="w-6 h-6"/>
                     <span className="font-medium">Message</span>
                 </Link>
@@ -37,12 +35,6 @@ const Sideheader = () => {
                     <span className="font-medium">Profile</span>
                 </Link>
             </div>
-
-            {/*  Home, Profile, Add Post, Search, Message */}
-
-            {/* <div>
-                Sttings
-            </div> */}
 
         </div>
     </>;
