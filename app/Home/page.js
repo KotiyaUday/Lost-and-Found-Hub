@@ -6,6 +6,8 @@ const Home = () => {
   const [college, setCollege] = useState("");
   const [sortOrder, setSortOrder] = useState("");
   const [category, setCategory] = useState("");
+  const [searchTerm, setSearchTerm] = useState(""); // For search
+  const [selectedPost, setSelectedPost] = useState(null); // For modal
 
   const colleges = [
     "Marwadi University",
@@ -30,12 +32,57 @@ const Home = () => {
   ];
 
   const posts = [
-    { image:'/assets/b.jpg' ,status: "Lost", category: "Electronics", title: "Wireless Buds", time: "09/10/2025 10:20 AM" },
-    { image:'/assets/b.jpg' ,status: "Found", category: "Documents", title: "PAN Card", time: "08/10/2025 02:35 PM" },
-    { image:'/assets/b.jpg' ,status: "Lost", category: "Wallet", title: "Brown Leather Wallet", time: "07/10/2025 05:45 PM" },
-    { image:'/assets/b.jpg' ,status: "Found", category: "Jewellery", title: "Gold Chain", time: "06/10/2025 11:10 AM" },
-    { image:'/assets/b.jpg' ,status: "Lost", category: "Clothing", title: "Black Hoodie", time: "05/10/2025 06:50 PM" },
+    { 
+      image:'/assets/b.jpg',
+      status: "Lost",
+      category: "Electronics",
+      title: "Wireless Buds",
+      time: "09/10/2025 10:20 AM",
+      description: "Black wireless buds, lost near college campus."
+    },
+    { 
+      image:'/assets/b.jpg',
+      status: "Found",
+      category: "Documents",
+      title: "PAN Card",
+      time: "08/10/2025 02:35 PM",
+      description: "Found PAN card with holder's name visible."
+    },
+    { 
+      image:'/assets/b.jpg',
+      status: "Lost",
+      category: "Wallet",
+      title: "Brown Leather Wallet",
+      time: "07/10/2025 05:45 PM",
+      description: "Lost brown leather wallet with ID cards inside."
+    },
+    { 
+      image:'/assets/b.jpg',
+      status: "Found",
+      category: "Jewellery",
+      title: "Gold Chain",
+      time: "06/10/2025 11:10 AM",
+      description: "Gold chain found near library."
+    },
+    { 
+      image:'/assets/b.jpg',
+      status: "Lost",
+      category: "Clothing",
+      title: "Black Hoodie",
+      time: "05/10/2025 06:50 PM",
+      description: "Black hoodie with logo on the back."
+    },
   ];
+
+  // Filter posts based on search term, category, and college
+  const filteredPosts = posts.filter((post) => {
+    const matchesSearch =
+      post.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      post.category.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesCategory = category ? post.category === category : true;
+    const matchesCollege = college ? college === college : true; // You can customize if posts have a college field
+    return matchesSearch && matchesCategory && matchesCollege;
+  });
 
   return (
     <>
@@ -84,72 +131,119 @@ const Home = () => {
                 </option>
               ))}
             </select>
+
+            {/* Search Input */}
+            <input
+              type="text"
+              placeholder="🔍 Search items..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="p-3 rounded-xl border border-gray-300 bg-white text-gray-700 shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none w-60"
+            />
           </div>
 
           {/* Horizontal Cards */}
           <div className="w-180 h-[85vh] overflow-y-auto pr-3" style={{ scrollbarWidth: "none" }}>
             <div className="flex flex-col gap-8">
-              {posts.map((post, index) => (
-                <div
-                  key={index}
-                  className="flex bg-white shadow-md hover:shadow-xl transition-all duration-300 rounded-2xl overflow-hidden border border-gray-200"
-                >
-                  {/* Image */}
-                  <div className="flex-shrink-0">
-                    <img
-                      src={post.image}
-                      alt="Item"
-                      className="w-48 h-48 object-cover rounded-l-2xl"
-                    />
+              {filteredPosts.length === 0 ? (
+                <p className="text-gray-500 text-center w-full mt-10">No items found.</p>
+              ) : (
+                filteredPosts.map((post, index) => (
+                  <div
+                    key={index}
+                    className="flex bg-white shadow-md hover:shadow-xl transition-all duration-300 rounded-2xl overflow-hidden border border-gray-200"
+                  >
+                    {/* Image */}
+                    <div className="flex-shrink-0">
+                      <img
+                        src={post.image}
+                        alt="Item"
+                        className="w-48 h-48 object-cover rounded-l-2xl"
+                      />
+                    </div>
+
+                    {/* Details */}
+                    <div className="flex flex-col justify-between p-5 w-full">
+                      <div className="flex justify-between items-start">
+                        <h2 className="text-2xl font-semibold text-gray-800">
+                          {post.title}
+                        </h2>
+                        <span
+                          className={`text-sm font-semibold px-3 py-1 rounded-full ${
+                            post.status === "Lost"
+                              ? "bg-red-100 text-red-600"
+                              : "bg-green-100 text-green-600"
+                          }`}
+                        >
+                          {post.status}
+                        </span>
+                      </div>
+
+                      <div className="mt-2 text-gray-700 space-y-1">
+                        <p>
+                          <span className="font-medium text-gray-800">Category:</span> {post.category}
+                        </p>
+                        <p>
+                          <span className="font-medium text-gray-800">Date & Time:</span> {post.time}
+                        </p>
+                        <p>
+                          <span className="font-medium text-gray-800">College:</span> {college || "Not Specified"}
+                        </p>
+                      </div>
+
+                      <div className="mt-4">
+                        <button
+                          className="bg-slate-400 text-white px-5 py-2 rounded-lg hover:bg-slate-600 transition-all duration-300"
+                          onClick={() => setSelectedPost(post)}
+                        >
+                          View Details
+                        </button>
+                      </div>
+                    </div>
                   </div>
-
-                  {/* Details */}
-                  <div className="flex flex-col justify-between p-5 w-full">
-                    {/* Top Row */}
-                    <div className="flex justify-between items-start">
-                      <h2 className="text-2xl font-semibold text-gray-800">
-                        {post.title}
-                      </h2>
-                      <span
-                        className={`text-sm font-semibold px-3 py-1 rounded-full ${
-                          post.status === "Lost"
-                            ? "bg-red-100 text-red-600"
-                            : "bg-green-100 text-green-600"
-                        }`}
-                      >
-                        {post.status}
-                      </span>
-                    </div>
-
-                    {/* Info */}
-                    <div className="mt-2 text-gray-700 space-y-1">
-                      <p>
-                        <span className="font-medium text-gray-800">Category:</span>{" "}
-                        {post.category}
-                      </p>
-                      <p>
-                        <span className="font-medium text-gray-800">Date & Time:</span>{" "}
-                        {post.time}
-                      </p>
-                      <p>
-                        <span className="font-medium text-gray-800">College:</span>{" "}
-                        {college || "Not Specified"}
-                      </p>
-                    </div>
-
-                    {/* Button */}
-                    <div className="mt-4">
-                      <button className="bg-slate-400 text-white px-5 py-2 rounded-lg hover:bg-slate-600 transition-all duration-300">
-                        View Details
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              ))}
+                ))
+              )}
             </div>
           </div>
         </div>
       </div>
+
+      {/* Modal Without Background */}
+      {selectedPost && (
+        <div className="fixed inset-0 flex items-center justify-center z-50 pointer-events-none">
+          <div className="bg-white rounded-2xl max-w-lg w-full p-5 relative shadow-xl pointer-events-auto">
+            {/* Close Button */}
+            <button
+              className="absolute top-3 right-3 text-gray-700 hover:text-gray-900 font-bold text-xl"
+              onClick={() => setSelectedPost(null)}
+            >
+              &times;
+            </button>
+
+            {/* Image */}
+            <img
+              src={selectedPost.image}
+              alt="Item"
+              className="w-full h-64 object-cover rounded-xl"
+            />
+
+            {/* Category, Title, Date Row */}
+            <div className="flex justify-between items-center mt-4">
+              <span className="font-semibold text-gray-700">{selectedPost.category}</span>
+              <h2 className="text-xl font-semibold text-gray-800">{selectedPost.title}</h2>
+              <span className="text-gray-500 text-sm">{selectedPost.time}</span>
+            </div>
+
+            {/* Description */}
+            <p className="mt-3 text-gray-700">{selectedPost.description}</p>
+
+            {/* Message Button */}
+            <button className="mt-5 w-full bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600 transition-all duration-300">
+              Send Message to Owner
+            </button>
+          </div>
+        </div>
+      )}
     </>
   );
 };
