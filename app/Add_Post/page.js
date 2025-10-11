@@ -28,10 +28,10 @@ const AddPost = () => {
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged(async (u) => {
       setUser(u);
-      if (u) {
-        // You can fetch college info from Firestore users collection if needed
-        setCollege("RK University");
-      }
+      // if (u) {
+      //   // You can fetch college info from Firestore users collection if needed
+      //   setCollege("RK University");
+      // }
     });
     return () => unsubscribe();
   }, []);
@@ -100,6 +100,7 @@ const AddPost = () => {
 
       const submittedData = {
         ...form,
+        postID: activeTab,
         postType: activeTab,
         category: form.category === "Other" ? form.otherCategory : form.category,
         imageURL:

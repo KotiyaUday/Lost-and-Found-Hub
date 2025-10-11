@@ -1,6 +1,7 @@
 "use client";
 import React from "react";
 import { User, Mail, Phone, Building } from "lucide-react";
+import Sideheader from "@/Components/Sideheader";
 
 const UserProfile = () => {
   // Sample posts
@@ -16,8 +17,11 @@ const UserProfile = () => {
   ];
 
   return (
-    <div className="min-h-screen w-full bg-gray-100 flex flex-col items-center">
-      
+    <div className="h-screen w-full grid grid-cols-4 bg-gray-100 pr-20">
+      <div className="flex-shrink-0 sticky top-0 h-screen">
+        <Sideheader />
+      </div>
+    <div className="min-h-screen w-full bg-gray-100 flex flex-col items-center col-start-2 col-end-5">
       {/* Profile Section */}
       <div className="w-full max-w-4xl flex flex-col md:flex-row items-center mt-6 px-4">
         
@@ -85,6 +89,7 @@ const UserProfile = () => {
           />
         ))}
       </div>
+    </div>
     </div>
   );
 };

@@ -1,12 +1,16 @@
 "use client";
+
 import Link from "next/link";
 import React, { useState } from "react";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { Home, Search, PlusCircle, MessageCircle, User, Menu } from "lucide-react";
+import { signOut } from "firebase/auth";
+import { auth } from "@/lib/firebase";
 
 const Sideheader = () => {
   const [isOpen, setIsOpen] = useState(true);
-  const pathname = usePathname(); // ✅ Get current route
+  const pathname = usePathname();
+  const router = useRouter();
 
   const navItems = [
     { name: "Home", icon: Home, href: "/Home" },
@@ -15,6 +19,17 @@ const Sideheader = () => {
     { name: "Message", icon: MessageCircle, href: "/Chat" },
     { name: "Profile", icon: User, href: "/User_Profile" },
   ];
+
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+      alert("Logged out successfully!");
+      router.push("/Login"); // ✅ Correct redirect method for App Router
+    } catch (error) {
+      console.error("Logout failed:", error);
+      alert("Error logging out. Please try again.");
+    }
+  };
 
   return (
     <div
@@ -45,18 +60,17 @@ const Sideheader = () => {
       {/* 🔹 Navigation Links */}
       <nav className="flex flex-col flex-1 mt-5 gap-2">
         {navItems.map((item, index) => {
-          const isActive = pathname === item.href; // ✅ check if active
+          const isActive = pathname === item.href;
 
           return (
             <Link
               key={index}
               href={item.href}
-              className={`group flex items-center gap-4 px-5 py-3 rounded-xl mx-2 transition-all duration-200 ease-in-out
-                ${
-                  isActive
-                    ? "bg-indigo-600 text-white shadow-lg"
-                    : "text-gray-800 hover:bg-indigo-500 hover:text-white"
-                }`}
+              className={`group flex items-center gap-4 px-5 py-3 rounded-xl mx-2 transition-all duration-200 ease-in-out ${
+                isActive
+                  ? "bg-indigo-600 text-white shadow-lg"
+                  : "text-gray-800 hover:bg-indigo-500 hover:text-white"
+              }`}
             >
               <item.icon
                 className={`w-6 h-6 transition-all duration-200 ${
@@ -76,6 +90,13 @@ const Sideheader = () => {
           );
         })}
       </nav>
+
+      <button
+        onClick={handleLogout}
+        className="bg-blue-400 p-2 w-30 m-3 rounded-2xl text-white hover:bg-blue-500"
+      >
+        Logout
+      </button>
 
       {/* 🔹 Footer Section */}
       <div

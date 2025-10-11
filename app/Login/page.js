@@ -18,59 +18,127 @@ const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  // ✅ Check auth state
+  // extra form for new Google users
+  const [showExtraForm, setShowExtraForm] = useState(false);
+  const [googleUser, setGoogleUser] = useState(null);
+  const [name, setName] = useState("");
+  const [collegeName, setCollegeName] = useState("");
+
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, async (u) => {
-      if (u) {
-        const userRef = doc(db, "users", u.uid);
-        const snap = await getDoc(userRef);
+      try {
+        if (u) {
+          console.log("onAuthStateChanged login ->", u.uid);
+          // if google flow in progress, don't auto-redirect
+          if (showExtraForm) {
+            setUser(u);
+            setLoading(false);
+            return;
+          }
 
-        if (!snap.exists()) {
-          await setDoc(userRef, {
-            uid: u.uid,
-            email: u.email,
-            photoURL: u.photoURL || "",
-            createdAt: serverTimestamp(),
-          });
+          // check user doc
+          const userRef = doc(db, "users", u.uid);
+          const snap = await getDoc(userRef);
+          if (snap.exists()) {
+            const data = snap.data();
+            if (data.name && data.collegeName) {
+              setUser(u);
+              router.push("/Home");
+            } else {
+              // show extra form to complete profile
+              setUser(u);
+              setName(data.name || u.displayName || "");
+              setCollegeName(data.collegeName || "");
+              setShowExtraForm(true);
+            }
+          } else {
+            // no doc: just set user (don't redirect) — user will trigger flow via Google button
+            setUser(u);
+          }
+        } else {
+          setUser(null);
         }
-
-        setUser(u);
-        router.push("/Home");
-      } else {
-        setUser(null);
+      } catch (err) {
+        console.error("onAuthStateChanged error (login):", err);
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     });
 
     return () => unsub();
-  }, [router]);
+  }, [router, showExtraForm]);
 
-  // ✅ Google sign-in
   const handleGoogleSignIn = async () => {
     try {
       const provider = new GoogleAuthProvider();
       provider.setCustomParameters({
         prompt: "select_account",
       });
-      await signInWithPopup(auth, provider);
+      const result = await signInWithPopup(auth, provider);
+      const gUser = result.user;
+      setGoogleUser(gUser);
+
+      // try to prefill from firestore doc if exists
+      const userRef = doc(db, "users", gUser.uid);
+      const snap = await getDoc(userRef);
+      if (snap.exists()) {
+        const data = snap.data();
+        setName(data.name || gUser.displayName || "");
+        setCollegeName(data.collegeName || "");
+      } else {
+        setName(gUser.displayName || "");
+        setCollegeName("");
+      }
+
+      // show the extra form (user will submit)
+      setShowExtraForm(true);
     } catch (error) {
       console.error("Sign-in failed:", error);
       alert("Failed to sign in. Please try again.");
     }
   };
 
-  // ✅ Email login
+  const handleGoogleFormSubmit = async (e) => {
+    e.preventDefault();
+    if (!googleUser && !user) {
+      alert("No authenticated Google user. Please try again.");
+      return;
+    }
+    const uid = (googleUser && googleUser.uid) || (user && user.uid);
+    try {
+      const userRef = doc(db, "users", uid);
+      await setDoc(
+        userRef,
+        {
+          uid,
+          name,
+          collegeName,
+          email: (googleUser && googleUser.email) || (user && user.email) || email || "",
+          photoURL: (googleUser && googleUser.photoURL) || (user && user.photoURL) || "",
+          createdAt: serverTimestamp(),
+        },
+        { merge: true }
+      );
+      setShowExtraForm(false);
+      alert("Profile completed successfully!");
+      router.push("/Home");
+    } catch (error) {
+      console.error("Error saving user data:", error);
+      alert("Failed to save details. Try again.");
+    }
+  };
+
   const handleEmailLogin = async (e) => {
     e.preventDefault();
     try {
       await signInWithEmailAndPassword(auth, email, password);
+      // onAuthStateChanged will handle redirect after checking doc
     } catch (error) {
       console.error("Email login failed:", error);
       alert("Invalid email or password. Please try again.");
     }
   };
 
-  // ✅ Forgot password
   const handleForgotPassword = async () => {
     if (!email) {
       alert("Please enter your email first!");
@@ -93,6 +161,42 @@ const Login = () => {
         Loading...
       </div>
     );
+
+  if (showExtraForm) {
+    return (
+      <div className="min-h-screen w-full bg-gray-200 flex items-center justify-center p-4">
+        <div className="bg-white rounded-2xl shadow-2xl shadow-black p-8 w-full max-w-md">
+          <h1 className="text-2xl font-semibold mb-6 text-center text-gray-800">
+            Complete Your Profile
+          </h1>
+          <form onSubmit={handleGoogleFormSubmit} className="flex flex-col gap-4">
+            <input
+              type="text"
+              placeholder="Full Name"
+              className="border border-gray-400 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-400"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              required
+            />
+            <input
+              type="text"
+              placeholder="College Name"
+              className="border border-gray-400 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-400"
+              value={collegeName}
+              onChange={(e) => setCollegeName(e.target.value)}
+              required
+            />
+            <button
+              type="submit"
+              className="bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition-all duration-200"
+            >
+              Submit
+            </button>
+          </form>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen w-full bg-gray-200 flex items-center justify-center p-4">
