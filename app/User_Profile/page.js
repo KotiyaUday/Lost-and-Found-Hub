@@ -13,6 +13,7 @@ import {
   orderBy,
   serverTimestamp,
 } from "firebase/firestore";
+import md5 from "crypto-js/md5"; // npm install crypto-js
 
 const UserProfile = () => {
   const [userPosts, setUserPosts] = useState([]);
@@ -31,6 +32,7 @@ const UserProfile = () => {
   const [editPostData, setEditPostData] = useState(null);
   const [editImage, setEditImage] = useState(null);
 
+  // Fetch user info & posts
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged(async (currentUser) => {
       if (!currentUser) {
@@ -42,7 +44,16 @@ const UserProfile = () => {
 
       setLoading(true);
       const userEmail = currentUser.email;
-      setUserInfo((prev) => ({ ...prev, email: userEmail }));
+
+      // Generate Gravatar URL based on email
+      const hash = md5(userEmail.trim().toLowerCase()).toString();
+      const gravatarURL = `https://www.gravatar.com/avatar/${hash}?d=identicon`;
+
+      setUserInfo((prev) => ({
+        ...prev,
+        email: userEmail,
+        profileImage: gravatarURL,
+      }));
 
       try {
         const q = query(collection(db, "items"), orderBy("timestamp", "desc"));
@@ -82,13 +93,17 @@ const UserProfile = () => {
     return () => unsubscribe();
   }, []);
 
+  // Filter posts
   const handleFilterChange = (filter) => {
     setSelectedFilter(filter);
-    if (filter === "lost") setFilteredPosts(userPosts.filter((p) => p.postType === "lost"));
-    else if (filter === "found") setFilteredPosts(userPosts.filter((p) => p.postType === "found"));
+    if (filter === "lost")
+      setFilteredPosts(userPosts.filter((p) => p.postType === "lost"));
+    else if (filter === "found")
+      setFilteredPosts(userPosts.filter((p) => p.postType === "found"));
     else setFilteredPosts(userPosts);
   };
 
+  // Edit post
   const handleEditClick = (post) => {
     setEditPostData(post);
     setEditImage(null);

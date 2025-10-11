@@ -97,7 +97,7 @@ const Home = () => {
     );
 
   return (
-    <div className="flex flex-col md:flex-row min-h-screen bg-gradient-to-b from-blue-50 to-indigo-100">
+    <div className="flex flex-col md:flex-row min-h-screen bg-gradient-to-b from-blue-50 to-indigo-100 p-5">
       {/* Sidebar */}
       <div className="md:w-64 w-full sticky top-0 z-20 bg-white shadow-md md:h-screen">
         <Sideheader />
