@@ -7,6 +7,7 @@ import {
   signInWithPopup,
   onAuthStateChanged,
   createUserWithEmailAndPassword,
+  fetchSignInMethodsForEmail,
 } from "firebase/auth";
 import { doc, setDoc, getDoc, serverTimestamp } from "firebase/firestore";
 
@@ -23,42 +24,36 @@ const Signup = () => {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
 
-  // Google temp user (holds result.user)
+  // Google temp user
   const [googleUser, setGoogleUser] = useState(null);
 
-  // ✅ Check if user is already signed in — only redirect if not in google flow
+  // ✅ Check if user already signed in
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, async (u) => {
       try {
         if (u) {
           console.log("onAuthStateChanged -> user:", u.uid);
-          // If we're currently doing the google-flow / showing extra form, don't auto-redirect
           if (showExtraForm) {
             setUser(u);
             setLoading(false);
             return;
           }
 
-          // Check Firestore user doc to decide redirect
           const userRef = doc(db, "users", u.uid);
           const snap = await getDoc(userRef);
           if (snap.exists()) {
             const data = snap.data();
-            // if doc has required fields, go Home
             if (data.name && data.collegeName) {
               setUser(u);
               router.push("/Home");
             } else {
-              // doc exists but missing fields -> show extra form with prefill
               setUser(u);
               setName(data.name || u.displayName || "");
               setCollegeName(data.collegeName || "");
               setShowExtraForm(true);
             }
           } else {
-            // no doc -> do not redirect; allow user to fill form if they want
             setUser(u);
-            // leave showExtraForm false — only show when user clicks Google button
           }
         } else {
           setUser(null);
@@ -70,33 +65,28 @@ const Signup = () => {
       }
     });
     return () => unsub();
-    // include showExtraForm so listener respects it
   }, [router, showExtraForm]);
 
-  // ✅ Google sign-up handler — ALWAYS open the form after popup
+  // ✅ Google sign-up handler
   const handleGoogleSignUp = async () => {
     try {
       const provider = new GoogleAuthProvider();
       provider.setCustomParameters({ prompt: "select_account" });
       const result = await signInWithPopup(auth, provider);
-
-      // save the firebase user object temporarily
       const gUser = result.user;
       setGoogleUser(gUser);
 
-      // try to prefill from firestore if exists, else from google displayName
       const userRef = doc(db, "users", gUser.uid);
       const snap = await getDoc(userRef);
+
       if (snap.exists()) {
-        const data = snap.data();
-        setName(data.name || gUser.displayName || "");
-        setCollegeName(data.collegeName || "");
-      } else {
-        setName(gUser.displayName || "");
-        setCollegeName("");
+        alert("Account already exists! Redirecting to Home...");
+        router.push("/Home");
+        return;
       }
 
-      // show the extra-info form (user will submit to create/update doc)
+      setName(gUser.displayName || "");
+      setCollegeName("");
       setShowExtraForm(true);
     } catch (error) {
       console.error("Google Sign-up failed:", error);
@@ -104,31 +94,35 @@ const Signup = () => {
     }
   };
 
-  // ✅ Submit form for new Google user (or updating existing user's doc)
+  // ✅ Submit Google user extra form
   const handleGoogleFormSubmit = async (e) => {
     e.preventDefault();
     if (!googleUser && !user) {
       alert("No authenticated Google user found. Please try again.");
       return;
     }
-    const uid = (googleUser && googleUser.uid) || (user && user.uid);
-    try {
-      const userRef = doc(db, "users", uid);
-      await setDoc(
-        userRef,
-        {
-          uid,
-          name,
-          collegeName,
-          email: (googleUser && googleUser.email) || (user && user.email) || email || "",
-          photoURL: (googleUser && googleUser.photoURL) || (user && user.photoURL) || "",
-          createdAt: serverTimestamp(),
-        },
-        { merge: true } // merge so we don't overwrite unintended fields
-      );
 
-      setShowExtraForm(false);
-      alert("Account information saved!");
+    const uid = googleUser?.uid || user?.uid;
+    const userRef = doc(db, "users", uid);
+    const snap = await getDoc(userRef);
+
+    if (snap.exists()) {
+      alert("Account already exists! Redirecting to Home...");
+      router.push("/Home");
+      return;
+    }
+
+    try {
+      await setDoc(userRef, {
+        uid,
+        name,
+        collegeName,
+        email: googleUser?.email || user?.email || email,
+        photoURL: googleUser?.photoURL || user?.photoURL || "",
+        createdAt: serverTimestamp(),
+      });
+
+      alert("Account created successfully!");
       router.push("/Home");
     } catch (error) {
       console.error("Error saving user data:", error);
@@ -136,7 +130,7 @@ const Signup = () => {
     }
   };
 
-  // ✅ Email & Password Sign-up
+  // ✅ Email & Password Signup
   const handleEmailSignUp = async (e) => {
     e.preventDefault();
 
@@ -146,6 +140,14 @@ const Signup = () => {
     }
 
     try {
+      // 🔹 Check if email is already registered
+      const existingMethods = await fetchSignInMethodsForEmail(auth, email);
+      if (existingMethods.length > 0) {
+        alert("This email is already registered. Please log in instead.");
+        return;
+      }
+
+      // 🔹 Create new user
       const res = await createUserWithEmailAndPassword(auth, email, password);
       const userRef = doc(db, "users", res.user.uid);
 
@@ -173,7 +175,7 @@ const Signup = () => {
       </div>
     );
 
-  // ✅ Google extra info form (shown after clicking Google)
+  // ✅ Google extra info form
   if (showExtraForm) {
     return (
       <div className="min-h-screen w-full bg-gray-200 flex items-center justify-center p-4">

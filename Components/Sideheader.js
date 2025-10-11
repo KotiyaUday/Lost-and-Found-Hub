@@ -14,7 +14,6 @@ const Sideheader = () => {
 
   const navItems = [
     { name: "Home", icon: Home, href: "/Home" },
-    { name: "Search", icon: Search, href: "#" },
     { name: "Add Post", icon: PlusCircle, href: "/Add_Post" },
     { name: "Message", icon: MessageCircle, href: "/Chat" },
     { name: "Profile", icon: User, href: "/User_Profile" },
@@ -38,16 +37,7 @@ const Sideheader = () => {
       }`}
     >
       {/* 🔹 Top Section */}
-      <div className="flex items-center justify-between px-4 py-5">
-        <div
-          className={`flex items-center gap-3 transition-all duration-300 ${
-            !isOpen && "opacity-0 hidden"
-          }`}
-        >
-          <img src="/assets/logo.png" alt="Logo" className="h-12 w-12 rounded-full shadow-lg" />
-          <h1 className="text-2xl font-semibold text-indigo-800 tracking-wide">L&F Hub</h1>
-        </div>
-
+      <div className="flex flex-col items-end justify-between px-4 py-5">
         {/* Menu button for toggle */}
         <button
           onClick={() => setIsOpen(!isOpen)}
@@ -55,6 +45,14 @@ const Sideheader = () => {
         >
           <Menu className="w-6 h-6 text-indigo-700" />
         </button>
+        <div
+          className={`flex items-center gap-3 transition-all duration-300 ${
+            !isOpen && "opacity-0 hidden"
+          }`}
+        >
+          <img src="/assets/logo.png" alt="Logo" className="h-60 w-60" />
+        </div>
+
       </div>
 
       {/* 🔹 Navigation Links */}

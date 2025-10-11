@@ -94,14 +94,14 @@ export default function ChatPage() {
   };
 
   return (
-    <div className="flex h-screen bg-gradient-to-br from-indigo-100 via-white to-indigo-50">
+    <div className="grid grid-cols-4 h-screen bg-gradient-to-br from-indigo-100 via-white to-indigo-50">
       {/* Sidebar */}
-      <div className="hidden md:block w-64 border-r bg-white shadow-md">
+      <div className="hidden md:block w-64 border-r bg-white shadow-md col-span-1">
         <Sideheader />
       </div>
 
       {/* Main Chat Area */}
-      <div className="flex flex-col flex-1">
+      <div className="flex flex-col flex-1 col-span-3 pr-15">
         {/* Header */}
         <div className="p-4 bg-white border-b shadow-sm flex items-center justify-between">
           <div className="flex items-center gap-3">

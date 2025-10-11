@@ -14,13 +14,13 @@ import {
   where,
 } from "firebase/firestore";
 import Sideheader from "@/Components/Sideheader";
-import OpenAI from "openai"; // ✅ Import OpenAI package (install with: npm install openai)
+// import OpenAI from "openai"; // ✅ Import OpenAI package (install with: npm install openai)
 
 // ✅ Initialize OpenAI client
-const client = new OpenAI({
-  apiKey: "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", // store key in .env.local (never hardcode it!)
-  dangerouslyAllowBrowser: true, // needed if using directly in client component
-});
+// const client = new OpenAI({
+//   apiKey: "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", // store key in .env.local (never hardcode it!)
+//   dangerouslyAllowBrowser: true, // needed if using directly in client component
+// });
 
 export default function ChatApp() {
   const [user, setUser] = useState(null);
