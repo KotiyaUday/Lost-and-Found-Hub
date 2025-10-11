@@ -17,13 +17,22 @@ const Register = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState({ type: "", text: "" });
 
-  // ✅ Handle Registration
+  const colleges = [
+    "Marwadi University",
+    "RK University",
+    "Atmiya University",
+    "Darshan University",
+    "VVP Engineering College",
+  ];
+
   const handleRegister = async (e) => {
     e.preventDefault();
     setLoading(true);
+    setMessage({ type: "", text: "" });
+
     try {
-      // Create user
       const userCredential = await createUserWithEmailAndPassword(
         auth,
         email,
@@ -31,12 +40,8 @@ const Register = () => {
       );
       const user = userCredential.user;
 
-      // Update display name
-      await updateProfile(user, {
-        displayName: name,
-      });
+      await updateProfile(user, { displayName: name });
 
-      // Save user data to Firestore
       await setDoc(doc(db, "users", user.uid), {
         uid: user.uid,
         name,
@@ -45,37 +50,57 @@ const Register = () => {
         createdAt: serverTimestamp(),
       });
 
-      // ✅ Log out immediately after registration
       await signOut(auth);
+      setMessage({
+        type: "success",
+        text: "🎉 Registration successful! Redirecting to login...",
+      });
 
-      alert("Registration successful! Please login.");
-      router.push("/Login");
+      setTimeout(() => router.push("/Login"), 2000);
     } catch (error) {
       console.error("Registration error:", error);
-      alert("Failed to register. Please try again.");
+      setMessage({
+        type: "error",
+        text:
+          error.code === "auth/email-already-in-use"
+            ? "Email already in use."
+            : "Failed to register. Please try again.",
+      });
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen w-full bg-gray-200 flex items-center justify-center p-4">
-      <div className="bg-white flex flex-col md:flex-row rounded-2xl shadow-2xl shadow-black w-full max-w-5xl overflow-hidden">
-
-        {/* Image Section */}
-        <div className="md:flex-1 w-full h-56 sm:h-72 md:h-auto">
+    <div className="min-h-screen w-full bg-gradient-to-br from-blue-100 to-blue-300 flex items-center justify-center p-4">
+      <div className="bg-white flex flex-col md:flex-row rounded-3xl shadow-xl w-full max-w-5xl overflow-hidden border border-gray-200">
+        {/* Left Side Image */}
+        <div className="md:flex-1 hidden md:block">
           <img
             src="/assets/registration.jpg"
-            alt="Registration"
-            className="w-full h-full object-cover rounded-t-2xl md:rounded-t-none md:rounded-l-2xl"
+            alt="Register"
+            className="w-full h-full object-cover"
           />
         </div>
 
-        {/* Form Section */}
-        <div className="md:flex-1 flex flex-col justify-center items-center p-6 sm:p-8 md:p-10">
-          <h1 className="text-3xl sm:text-4xl font-semibold mb-6 text-center text-gray-800">
-            Create Account
+        {/* Right Side Form */}
+        <div className="md:flex-1 flex flex-col justify-center items-center p-8 md:p-12">
+          <h1 className="text-4xl font-bold text-blue-700 mb-6">
+            Create Your Account
           </h1>
+
+          {/* Message Banner */}
+          {message.text && (
+            <div
+              className={`w-full max-w-sm text-center mb-4 py-2 px-4 rounded-lg text-sm font-medium transition-all duration-300 ${
+                message.type === "success"
+                  ? "bg-green-100 text-green-700 border border-green-400"
+                  : "bg-red-100 text-red-700 border border-red-400"
+              }`}
+            >
+              {message.text}
+            </div>
+          )}
 
           <form
             onSubmit={handleRegister}
@@ -84,31 +109,39 @@ const Register = () => {
             <input
               type="text"
               placeholder="Full Name"
-              className="border border-gray-400 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400 text-sm sm:text-base"
+              className="border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
               value={name}
               onChange={(e) => setName(e.target.value)}
               required
             />
-            <input
-              type="text"
-              placeholder="College Name"
-              className="border border-gray-400 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400 text-sm sm:text-base"
+
+            <select
+              className="border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
               value={college}
               onChange={(e) => setCollege(e.target.value)}
               required
-            />
+            >
+              <option value="">Select Your College</option>
+              {colleges.map((clg, index) => (
+                <option key={index} value={clg}>
+                  {clg}
+                </option>
+              ))}
+            </select>
+
             <input
               type="email"
-              placeholder="Email"
-              className="border border-gray-400 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400 text-sm sm:text-base"
+              placeholder="Email Address"
+              className="border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
             />
+
             <input
               type="password"
               placeholder="Password"
-              className="border border-gray-400 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400 text-sm sm:text-base"
+              className="border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
@@ -117,20 +150,21 @@ const Register = () => {
             <button
               type="submit"
               disabled={loading}
-              className={`bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 active:scale-95 transition-all duration-200 text-sm sm:text-base ${
-                loading ? "opacity-70 cursor-not-allowed" : ""
+              className={`w-full py-2 rounded-lg text-white font-medium transition-all duration-200 ${
+                loading
+                  ? "bg-blue-400 cursor-not-allowed"
+                  : "bg-blue-600 hover:bg-blue-700 active:scale-95"
               }`}
             >
               {loading ? "Registering..." : "Sign Up"}
             </button>
           </form>
 
-          {/* Login link */}
-          <p className="mt-6 text-sm sm:text-base text-gray-600 text-center">
+          <p className="mt-6 text-gray-600">
             Already have an account?{" "}
             <button
               onClick={() => router.push("/Login")}
-              className="text-blue-600 hover:underline font-medium"
+              className="text-blue-600 font-semibold hover:underline"
             >
               Login
             </button>
