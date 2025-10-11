@@ -91,11 +91,7 @@ export default function ChatUserList() {
       </div>
     </div>
   );
-<<<<<<< HEAD
-}
-=======
 }
 
 
 
->>>>>>> 68487e4b652b7c52f10e49bdc5dcd624cc0796d1

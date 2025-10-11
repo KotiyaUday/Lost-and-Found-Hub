@@ -22,18 +22,80 @@ const Signup = () => {
   const [collegeName, setCollegeName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState({ type: "", text: "" });
+  const [confirmPassword, setConfirmPassword] = useState("");
 
-  const colleges = [
-    "Marwadi University",
-    "RK University",
-    "Atmiya University",
-    "Darshan University",
-    "VVP Engineering College",
-  ];
+  // Google temp user
+  const [googleUser, setGoogleUser] = useState(null);
 
-  const handleRegister = async (e) => {
+  // ✅ Check if user already signed in
+  useEffect(() => {
+    const unsub = onAuthStateChanged(auth, async (u) => {
+      try {
+        if (u) {
+          console.log("onAuthStateChanged -> user:", u.uid);
+          if (showExtraForm) {
+            setUser(u);
+            setLoading(false);
+            return;
+          }
+
+          const userRef = doc(db, "users", u.uid);
+          const snap = await getDoc(userRef);
+          if (snap.exists()) {
+            const data = snap.data();
+            if (data.name && data.collegeName) {
+              setUser(u);
+              router.push("/Home");
+            } else {
+              setUser(u);
+              setName(data.name || u.displayName || "");
+              setCollegeName(data.collegeName || "");
+              setShowExtraForm(true);
+            }
+          } else {
+            setUser(u);
+          }
+        } else {
+          setUser(null);
+        }
+      } catch (err) {
+        console.error("onAuthStateChanged error:", err);
+      } finally {
+        setLoading(false);
+      }
+    });
+    return () => unsub();
+  }, [router, showExtraForm]);
+
+  // ✅ Google sign-up handler
+  const handleGoogleSignUp = async () => {
+    try {
+      const provider = new GoogleAuthProvider();
+      provider.setCustomParameters({ prompt: "select_account" });
+      const result = await signInWithPopup(auth, provider);
+      const gUser = result.user;
+      setGoogleUser(gUser);
+
+      const userRef = doc(db, "users", gUser.uid);
+      const snap = await getDoc(userRef);
+
+      if (snap.exists()) {
+        alert("Account already exists! Redirecting to Home...");
+        router.push("/Home");
+        return;
+      }
+
+      setName(gUser.displayName || "");
+      setCollegeName("");
+      setShowExtraForm(true);
+    } catch (error) {
+      console.error("Google Sign-up failed:", error);
+      alert("Google sign-up failed. Please try again.");
+    }
+  };
+
+  // ✅ Submit Google user extra form
+  const handleGoogleFormSubmit = async (e) => {
     e.preventDefault();
     if (!googleUser && !user) {
       alert("No authenticated Google user found. Please try again.");
@@ -91,21 +153,6 @@ const Signup = () => {
 
       await setDoc(userRef, {
         uid: res.user.uid,
-    setLoading(true);
-    setMessage({ type: "", text: "" });
-
-    try {
-      const userCredential = await createUserWithEmailAndPassword(
-        auth,
-        email,
-        password
-      );
-      const user = userCredential.user;
-
-      await updateProfile(user, { displayName: name });
-
-      await setDoc(doc(db, "users", user.uid), {
-        uid: user.uid,
         name,
         collegeName,
         email: res.user.email,
@@ -113,61 +160,76 @@ const Signup = () => {
         createdAt: serverTimestamp(),
       });
 
-      await signOut(auth);
-      setMessage({
-        type: "success",
-        text: "🎉 Registration successful! Redirecting to login...",
-      });
-
-      setTimeout(() => router.push("/Login"), 2000);
+      alert("Account created successfully!");
+      router.push("/Home");
     } catch (error) {
-      console.error("Registration error:", error);
-      setMessage({
-        type: "error",
-        text:
-          error.code === "auth/email-already-in-use"
-            ? "Email already in use."
-            : "Failed to register. Please try again.",
-      });
-    } finally {
-      setLoading(false);
+      console.error("Sign-up failed:", error);
+      alert(error.message);
     }
   };
 
+  if (loading)
+    return (
+      <div className="h-screen flex items-center justify-center text-lg">
+        Loading...
+      </div>
+    );
+
+  // ✅ Google extra info form
+  if (showExtraForm) {
+    return (
+      <div className="min-h-screen w-full bg-gray-200 flex items-center justify-center p-4">
+        <div className="bg-white rounded-2xl shadow-2xl shadow-black p-8 w-full max-w-md">
+          <h1 className="text-2xl font-semibold mb-6 text-center text-gray-800">
+            Complete Your Profile
+          </h1>
+          <form onSubmit={handleGoogleFormSubmit} className="flex flex-col gap-4">
+            <input
+              type="text"
+              placeholder="Full Name"
+              className="border border-gray-400 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-400"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              required
+            />
+            <input
+              type="text"
+              placeholder="College Name"
+              className="border border-gray-400 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-400"
+              value={collegeName}
+              onChange={(e) => setCollegeName(e.target.value)}
+              required
+            />
+            <button
+              type="submit"
+              className="bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition-all duration-200"
+            >
+              Submit
+            </button>
+          </form>
+        </div>
+      </div>
+    );
+  }
+
+  // ✅ Default Signup Page
   return (
     <div className="min-h-screen w-full bg-gray-200 flex items-center justify-center p-4">
       <div className="bg-white flex flex-col md:flex-row rounded-2xl shadow-2xl shadow-black w-full max-w-5xl overflow-hidden">
         {/* Image Section */}
         <div className="md:flex-1 w-full h-56 sm:h-72 md:h-auto">
-    <div className="min-h-screen w-full bg-gradient-to-br from-blue-100 to-blue-300 flex items-center justify-center p-4">
-      <div className="bg-white flex flex-col md:flex-row rounded-3xl shadow-xl w-full max-w-5xl overflow-hidden border border-gray-200">
-        {/* Left Side Image */}
-        <div className="md:flex-1 hidden md:block">
           <img
             src="/assets/registration.jpg"
-            alt="Register"
-            className="w-full h-full object-cover"
+            alt="Signup"
+            className="w-full h-full object-cover rounded-t-2xl md:rounded-t-none md:rounded-l-2xl"
           />
         </div>
 
-        {/* Right Side Form */}
-        <div className="md:flex-1 flex flex-col justify-center items-center p-8 md:p-12">
-          <h1 className="text-4xl font-bold text-blue-700 mb-6">
+        {/* Form Section */}
+        <div className="md:flex-1 flex flex-col justify-center items-center p-6 sm:p-8 md:p-10">
+          <h1 className="text-3xl sm:text-4xl font-semibold mb-6 text-center text-gray-800">
             Create Your Account
           </h1>
-
-          {/* Message Banner */}
-          {message.text && (
-            <div
-              className={`w-full max-w-sm text-center mb-4 py-2 px-4 rounded-lg text-sm font-medium transition-all duration-300 ${
-                message.type === "success"
-                  ? "bg-green-100 text-green-700 border border-green-400"
-                  : "bg-red-100 text-red-700 border border-red-400"
-              }`}
-            >
-              {message.text}
-            </div>
-          )}
 
           <form
             onSubmit={handleEmailSignUp}
@@ -176,30 +238,25 @@ const Signup = () => {
             <input
               type="text"
               placeholder="Full Name"
-              className="border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="border border-gray-400 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400 text-sm sm:text-base"
               value={name}
               onChange={(e) => setName(e.target.value)}
               required
             />
 
-            <select
-              className="border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
-              value={college}
-              onChange={(e) => setCollege(e.target.value)}
+            <input
+              type="text"
+              placeholder="College Name"
+              className="border border-gray-400 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400 text-sm sm:text-base"
+              value={collegeName}
+              onChange={(e) => setCollegeName(e.target.value)}
               required
-            >
-              <option value="">Select Your College</option>
-              {colleges.map((clg, index) => (
-                <option key={index} value={clg}>
-                  {clg}
-                </option>
-              ))}
-            </select>
+            />
 
             <input
               type="email"
-              placeholder="Email Address"
-              className="border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Email"
+              className="border border-gray-400 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400 text-sm sm:text-base"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
@@ -208,7 +265,7 @@ const Signup = () => {
             <input
               type="password"
               placeholder="Password"
-              className="border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="border border-gray-400 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400 text-sm sm:text-base"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
@@ -225,22 +282,40 @@ const Signup = () => {
 
             <button
               type="submit"
-              disabled={loading}
-              className={`w-full py-2 rounded-lg text-white font-medium transition-all duration-200 ${
-                loading
-                  ? "bg-blue-400 cursor-not-allowed"
-                  : "bg-blue-600 hover:bg-blue-700 active:scale-95"
-              }`}
+              className="bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 active:scale-95 transition-all duration-200 text-sm sm:text-base"
             >
               Sign Up
             </button>
           </form>
 
-          <p className="mt-6 text-gray-600">
+          {/* Divider */}
+          <div className="flex items-center my-6 w-full max-w-sm">
+            <hr className="flex-grow border-gray-300" />
+            <span className="px-2 text-gray-500 text-sm sm:text-base">OR</span>
+            <hr className="flex-grow border-gray-300" />
+          </div>
+
+          {/* Google Sign-Up */}
+          <button
+            onClick={handleGoogleSignUp}
+            className="flex items-center justify-center gap-3 bg-white border border-black rounded-lg px-5 py-3 hover:shadow-xl active:scale-95 transition-all duration-200 w-full max-w-sm"
+          >
+            <img
+              src="https://www.svgrepo.com/show/475656/google-color.svg"
+              alt="Google logo"
+              className="w-6 h-6"
+            />
+            <span className="font-medium text-black text-sm sm:text-base md:text-base">
+              Sign up with Google
+            </span>
+          </button>
+
+          {/* Login link */}
+          <p className="mt-6 text-sm sm:text-base text-gray-600 text-center">
             Already have an account?{" "}
             <button
               onClick={() => router.push("/Login")}
-              className="text-blue-600 font-semibold hover:underline"
+              className="text-blue-600 hover:underline font-medium"
             >
               Login
             </button>
@@ -251,4 +326,4 @@ const Signup = () => {
   );
 };
 
-export default Register;
+export default Signup;
