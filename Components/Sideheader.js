@@ -12,7 +12,7 @@ const Sideheader = () => {
     { name: "Home", icon: Home, href: "/Home" },
     { name: "Search", icon: Search, href: "#" },
     { name: "Add Post", icon: PlusCircle, href: "/Add_Post" },
-    { name: "Message", icon: MessageCircle, href: "/Chat" },
+    { name: "Message", icon: MessageCircle, href: "/ChatApp" },
     { name: "Profile", icon: User, href: "/User_Profile" },
   ];
 

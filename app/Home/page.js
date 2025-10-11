@@ -18,12 +18,13 @@ const Home = () => {
   const [colleges, setColleges] = useState([]);
   const [categories, setCategories] = useState([]);
 
+  const currentUserEmail = auth.currentUser?.email || "";
+
   useEffect(() => {
     const fetchItems = async () => {
       try {
         const q = query(collection(db, "items"), orderBy("timestamp", "desc"));
         const snapshot = await getDocs(q);
-        const currentUserEmail = auth.currentUser?.email || "";
 
         const data = snapshot.docs.map((doc) => {
           const docData = doc.data();
@@ -62,7 +63,7 @@ const Home = () => {
     };
 
     fetchItems();
-  }, []);
+  }, [currentUserEmail]);
 
   // Apply filters & sorting
   const filteredItems = items
@@ -81,6 +82,23 @@ const Home = () => {
       </div>
     );
   }
+
+  // Generate unique chat ID based on emails
+  const getChatId = (email1, email2) => {
+    return [email1, email2].sort().join("_"); // sorted to ensure uniqueness
+  };
+
+  // Handle Send Message button click
+  const handleSendMessage = (item) => {
+    if (!currentUserEmail) return;
+
+    const chatId = getChatId(currentUserEmail, item.userEmail);
+
+    // Redirect to chat page with required params
+    window.location.href = `/Chat?chatId=${chatId}&otherUser=${encodeURIComponent(
+      item.userEmail
+    )}&itemTitle=${encodeURIComponent(item.title)}&itemImage=${encodeURIComponent(item.image)}`;
+  };
 
   return (
     <div className="flex min-h-screen bg-gradient-to-b from-blue-50 to-indigo-100">
@@ -178,9 +196,15 @@ const Home = () => {
                   </p>
                 </div>
 
-                <button className="mt-4 bg-indigo-500 text-white font-medium py-2 rounded-lg hover:bg-indigo-600 transition-all duration-300">
-                  View Details
-                </button>
+                {/* Message Button */}
+                {item.postType === "lost" && (
+                  <button
+                    onClick={() => handleSendMessage(item)}
+                    className="mt-4 bg-blue-500 text-white font-medium py-2 rounded-lg hover:bg-blue-600 transition-all duration-300"
+                  >
+                    Send Message to Owner
+                  </button>
+                )}
               </div>
             </div>
           ))}
@@ -264,18 +288,15 @@ const Home = () => {
                 {selectedPost.description}
               </p>
 
-              {/* Show Message Button only if Lost */}
               {selectedPost.postType === "lost" && (
                 <button
-                  onClick={() =>
-                    (window.location.href = `/Chat?otherUser=${encodeURIComponent(
-                      selectedPost.userEmail
-                    )}&itemImage=${encodeURIComponent(selectedPost.image)}`)
-                  }
-                  className="mt-5 w-full bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600 transition-all duration-300"
-                >
-                  Send Message to Owner
-                </button>
+                onClick={() =>
+                  window.location.href = `/Chat?otherUser=${selectedPost.userEmail}&itemImage=${selectedPost.image}`
+                }
+                className="mt-5 w-full bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600 transition-all duration-300"
+              >
+                Send Message to Owner
+              </button>
               )}
             </div>
           </div>
