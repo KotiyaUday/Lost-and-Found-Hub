@@ -1,7 +1,6 @@
 "use client";
 import React, { useState, useEffect } from "react";
-import { auth } from "../../lib/firebase";
-import { db } from "../../lib/firebase";
+import { auth, db } from "../../lib/firebase";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 import Sideheader from "@/Components/Sideheader";
 
@@ -28,10 +27,10 @@ const AddPost = () => {
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged(async (u) => {
       setUser(u);
-      // if (u) {
-      //   // You can fetch college info from Firestore users collection if needed
-      //   setCollege("RK University");
-      // }
+      if (u) {
+        // You can fetch college info from Firestore users collection if needed
+        setCollege("RK University");
+      }
     });
     return () => unsubscribe();
   }, []);
@@ -108,11 +107,10 @@ const AddPost = () => {
           "https://www.shutterstock.com/shutterstock/videos/1111389205/thumb/12.jpg?ip=x480",
         timestamp: serverTimestamp(),
         college: college || "Not Specified",
-        userEmail: user?.email || "Anonymous", // ✅ Add current user’s email
+        userEmail: user?.email || "Anonymous",
       };
 
       await addDoc(collection(db, "items"), submittedData);
-
       setSuccess("🎉 Your post has been added successfully!");
       setError("");
       resetForm();
@@ -123,105 +121,109 @@ const AddPost = () => {
     }
   };
 
+  const today = new Date().toISOString().split("T")[0];
+
   return (
-    <div className="flex min-h-screen bg-gray-300">
-      {/* 🔹 Sticky Sidebar */}
-      <div className="flex-shrink-0 sticky top-0 h-screen">
+    <div className="flex flex-col md:flex-row min-h-screen bg-gradient-to-br from-indigo-100 via-gray-100 to-white">
+      {/* Sidebar */}
+      <div className="flex-shrink-0 md:sticky md:top-0 h-auto md:h-screen bg-white shadow-md">
         <Sideheader />
       </div>
 
-      {/* 🔹 Scrollable Main Content */}
-      <div className="flex-1 p-6 overflow-y-auto max-h-screen">
-        <div className="max-w-3xl mx-auto bg-white shadow-lg rounded-xl p-6 sm:p-8 border border-gray-200">
-          <h2 className="text-2xl sm:text-3xl font-bold text-center text-indigo-700 mb-6">
+      {/* Centered Form Section */}
+      <div className="flex-1 flex justify-center items-center py-10 px-4">
+        <div className="w-full max-w-3xl bg-white/90 backdrop-blur-md border border-gray-200 shadow-xl rounded-2xl p-8">
+          <h2 className="text-3xl font-bold text-center text-indigo-700 mb-8">
             Add Post – Lost & Found Hub
           </h2>
 
           {!user && (
-            <p className="text-red-600 text-center font-semibold mb-4 text-sm sm:text-base">
-              Please log in to post an item
+            <p className="text-red-600 text-center font-semibold mb-5">
+              Please log in to post an item.
             </p>
           )}
 
           {/* Tabs */}
-          <div className="flex flex-col sm:flex-row justify-center mb-5 gap-2 sm:gap-0">
-            <button
-              onClick={() => setActiveTab("lost")}
-              className={`px-5 py-2 rounded-lg sm:rounded-l-lg ${
-                activeTab === "lost"
-                  ? "bg-blue-600 text-white"
-                  : "bg-gray-200 text-gray-800 hover:bg-gray-300"
-              }`}
-            >
-              Lost Item
-            </button>
-            <button
-              onClick={() => setActiveTab("found")}
-              className={`px-5 py-2 rounded-lg sm:rounded-r-lg ${
-                activeTab === "found"
-                  ? "bg-green-600 text-white"
-                  : "bg-gray-200 text-gray-800 hover:bg-gray-300"
-              }`}
-            >
-              Found Item
-            </button>
+          <div className="flex justify-center mb-6">
+            <div className="flex border rounded-xl overflow-hidden">
+              <button
+                type="button"
+                onClick={() => setActiveTab("lost")}
+                className={`px-6 py-2 text-sm sm:text-base font-medium transition ${
+                  activeTab === "lost"
+                    ? "bg-indigo-600 text-white"
+                    : "bg-gray-200 hover:bg-gray-300 text-gray-700"
+                }`}
+              >
+                Lost Item
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveTab("found")}
+                className={`px-6 py-2 text-sm sm:text-base font-medium transition ${
+                  activeTab === "found"
+                    ? "bg-green-600 text-white"
+                    : "bg-gray-200 hover:bg-gray-300 text-gray-700"
+                }`}
+              >
+                Found Item
+              </button>
+            </div>
           </div>
 
           {/* Form */}
-          <form
-            onSubmit={handleSubmit}
-            className="bg-gray-50 p-5 sm:p-6 rounded-lg shadow-inner space-y-5"
-          >
+          <form onSubmit={handleSubmit} className="space-y-5">
             {/* Title */}
             <div>
-              <label className="block font-medium mb-1 text-gray-700">Title *</label>
+              <label className="block font-medium text-gray-700 mb-1">Title *</label>
               <input
                 type="text"
                 name="title"
                 value={form.title}
                 onChange={handleChange}
-                className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-indigo-500"
                 placeholder={
                   activeTab === "lost" ? "E.g., Lost Wallet" : "E.g., Found Mobile Phone"
                 }
+                className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-indigo-500"
                 required
               />
             </div>
 
             {/* Description */}
             <div>
-              <label className="block font-medium mb-1 text-gray-700">Description *</label>
+              <label className="block font-medium text-gray-700 mb-1">Description *</label>
               <textarea
                 name="description"
                 value={form.description}
                 onChange={handleChange}
-                className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-indigo-500"
                 placeholder="Provide details like color, brand, unique marks..."
+                className="w-full border border-gray-300 rounded-lg px-4 py-2 h-24 focus:ring-2 focus:ring-indigo-500"
                 required
               />
             </div>
 
             {/* Location + Date */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block font-medium mb-1 text-gray-700">Location *</label>
+                <label className="block font-medium text-gray-700 mb-1">Location *</label>
                 <input
                   type="text"
                   name="location"
                   value={form.location}
                   onChange={handleChange}
-                  className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-indigo-500"
                   placeholder="Where it was lost/found"
+                  className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-indigo-500"
                   required
                 />
               </div>
               <div>
-                <label className="block font-medium mb-1 text-gray-700">Date *</label>
+                <label className="block font-medium text-gray-700 mb-1">Date *</label>
                 <input
                   type="date"
                   name="date"
                   value={form.date}
                   onChange={handleChange}
+                  max={today}
                   className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-indigo-500"
                   required
                 />
@@ -230,7 +232,7 @@ const AddPost = () => {
 
             {/* Category */}
             <div>
-              <label className="block font-medium mb-1 text-gray-700">Category *</label>
+              <label className="block font-medium text-gray-700 mb-1">Category *</label>
               <select
                 name="category"
                 value={form.category}
@@ -250,14 +252,16 @@ const AddPost = () => {
 
             {form.category === "Other" && (
               <div>
-                <label className="block font-medium mb-1 text-gray-700">Enter Category Name *</label>
+                <label className="block font-medium text-gray-700 mb-1">
+                  Enter Category Name *
+                </label>
                 <input
                   type="text"
                   name="otherCategory"
                   value={form.otherCategory}
                   onChange={handleChange}
-                  className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-indigo-500"
                   placeholder="Enter your category name"
+                  className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-indigo-500"
                   required
                 />
               </div>
@@ -265,21 +269,23 @@ const AddPost = () => {
 
             {/* Contact Info */}
             <div>
-              <label className="block font-medium mb-1 text-gray-700">Contact Info *</label>
+              <label className="block font-medium text-gray-700 mb-1">
+                Contact Info *
+              </label>
               <input
                 type="text"
                 name="contact"
                 value={form.contact}
                 onChange={handleChange}
-                className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-indigo-500"
                 placeholder="Phone or Email"
+                className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-indigo-500"
                 required
               />
             </div>
 
             {/* Image */}
             <div>
-              <label className="block font-medium mb-1 text-gray-700">Image</label>
+              <label className="block font-medium text-gray-700 mb-1">Image</label>
               <input
                 type="file"
                 accept="image/*"
@@ -292,29 +298,29 @@ const AddPost = () => {
             </div>
 
             {/* Buttons */}
-            <div className="flex flex-col sm:flex-row justify-between items-center gap-3 sm:gap-0">
+            <div className="flex flex-col sm:flex-row justify-between items-center gap-3">
               <button
                 type="submit"
                 disabled={!user}
-                className="w-full sm:w-auto bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2 rounded-lg shadow-md transition disabled:opacity-50"
+                className="w-full sm:w-auto bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-6 py-2 rounded-lg shadow-md transition disabled:opacity-50"
               >
                 Add Post
               </button>
               <button
                 type="button"
                 onClick={resetForm}
-                className="w-full sm:w-auto bg-gray-300 hover:bg-gray-400 px-5 py-2 rounded-lg shadow-sm transition"
+                className="w-full sm:w-auto bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium px-6 py-2 rounded-lg shadow-sm transition"
               >
                 Reset
               </button>
             </div>
 
-            {/* Success/Error Messages */}
+            {/* Feedback */}
             {success && (
-              <p className="text-green-600 font-medium text-center mt-4">{success}</p>
+              <p className="text-green-600 font-semibold text-center mt-4">{success}</p>
             )}
             {error && (
-              <p className="text-red-600 font-medium text-center mt-4">{error}</p>
+              <p className="text-red-600 font-semibold text-center mt-4">{error}</p>
             )}
           </form>
         </div>

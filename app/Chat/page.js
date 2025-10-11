@@ -1,5 +1,6 @@
 "use client";
 import React, { useState, useEffect, useRef } from "react";
+import Sideheader from "@/Components/Sideheader";
 import { db, auth } from "@/lib/firebase";
 import {
   doc,
@@ -94,32 +95,32 @@ export default function ChatPage() {
   };
 
   return (
-    <div className="grid grid-cols-4 h-screen bg-gradient-to-br from-indigo-100 via-white to-indigo-50">
+    <div className="flex h-screen bg-gradient-to-br from-indigo-100 via-purple-50 to-indigo-50">
       {/* Sidebar */}
-      <div className="hidden md:block w-64 border-r bg-white shadow-md col-span-1">
+      <div className="hidden md:flex flex-col w-72 border-r bg-white/70 backdrop-blur-md shadow-md">
         <Sideheader />
       </div>
 
-      {/* Main Chat Area */}
-      <div className="flex flex-col flex-1 col-span-3 pr-15">
-        {/* Header */}
-        <div className="p-4 bg-white border-b shadow-sm flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            {itemImage && (
-              <img
-                src={itemImage}
-                alt={itemTitle}
-                className="w-10 h-10 object-cover rounded-full"
-              />
-            )}
-            <h2 className="text-lg md:text-xl font-semibold text-indigo-700">
-              💬 Chat about "{itemTitle || "Item"}"
-            </h2>
-          </div>
-          <span className="text-sm text-gray-500 hidden sm:block">
-            Chatting with {otherUserEmail}
-          </span>
-        </div>
+      {/* Chat Section */}
+      <div className="flex flex-1 flex-col">
+        {otherUser ? (
+          <>
+            {/* Header */}
+            <div className="p-4 bg-white/70 backdrop-blur-md border-b shadow-sm flex items-center space-x-4">
+              {itemImage && (
+                <img
+                  src={itemImage}
+                  alt="Item"
+                  className="w-12 h-12 rounded-xl object-cover shadow-sm border"
+                />
+              )}
+              <div>
+                <h2 className="text-lg md:text-xl font-semibold text-indigo-700">
+                  💬 Chat with {otherUser}
+                </h2>
+                <p className="text-sm text-gray-500">Discuss this item</p>
+              </div>
+            </div>
 
         {/* Messages */}
         <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3 md:px-8 md:py-5">

@@ -97,7 +97,11 @@ const Home = () => {
     );
 
   return (
+<<<<<<< HEAD
     <div className="flex flex-col md:flex-row min-h-screen bg-gradient-to-b from-blue-50 to-indigo-100">
+=======
+    <div className="flex flex-col md:flex-row min-h-screen bg-gradient-to-b from-blue-50 to-indigo-100 p-5">
+>>>>>>> 68487e4b652b7c52f10e49bdc5dcd624cc0796d1
       {/* Sidebar */}
       <div className="md:w-64 w-full sticky top-0 z-20 bg-white shadow-md md:h-screen">
         <Sideheader />
@@ -110,11 +114,19 @@ const Home = () => {
         </h1>
 
         {/* 🔹 Filters */}
+<<<<<<< HEAD
         <div className="grid grid-cols-5 grid-rows-1 gap-3 sm:gap-4 justify-center mb-6 px-5">
           <select
             value={college}
             onChange={(e) => setCollege(e.target.value)}
             className="p-2 sm:p-3 rounded-xl border border-gray-300 bg-white text-gray-700 shadow-sm focus:ring-2 focus:ring-indigo-500 w-full sm:w-auto col-span-1"
+=======
+        <div className="flex flex-wrap gap-3 sm:gap-4 justify-center mb-6">
+          <select
+            value={college}
+            onChange={(e) => setCollege(e.target.value)}
+            className="p-2 sm:p-3 rounded-xl border border-gray-300 bg-white text-gray-700 shadow-sm focus:ring-2 focus:ring-indigo-500 w-full sm:w-auto"
+>>>>>>> 68487e4b652b7c52f10e49bdc5dcd624cc0796d1
           >
             <option value="">🎓 Select College</option>
             {colleges.map((clg, idx) => (
@@ -125,7 +137,11 @@ const Home = () => {
           <select
             value={category}
             onChange={(e) => setCategory(e.target.value)}
+<<<<<<< HEAD
             className="p-2 sm:p-3 rounded-xl border border-gray-300 bg-white text-gray-700 shadow-sm focus:ring-2 focus:ring-indigo-500 w-full sm:w-auto col-span-1"
+=======
+            className="p-2 sm:p-3 rounded-xl border border-gray-300 bg-white text-gray-700 shadow-sm focus:ring-2 focus:ring-indigo-500 w-full sm:w-auto"
+>>>>>>> 68487e4b652b7c52f10e49bdc5dcd624cc0796d1
           >
             <option value="">📦 Category</option>
             {categories.map((cat, idx) => (
@@ -136,7 +152,11 @@ const Home = () => {
           <select
             value={sortOrder}
             onChange={(e) => setSortOrder(e.target.value)}
+<<<<<<< HEAD
             className="p-2 sm:p-3 rounded-xl border border-gray-300 bg-white text-gray-700 shadow-sm focus:ring-2 focus:ring-indigo-500 sm:w-auto col-span-1"
+=======
+            className="p-2 sm:p-3 rounded-xl border border-gray-300 bg-white text-gray-700 shadow-sm focus:ring-2 focus:ring-indigo-500 w-full sm:w-auto"
+>>>>>>> 68487e4b652b7c52f10e49bdc5dcd624cc0796d1
           >
             <option value="">🕒 Sort</option>
             <option value="asc">Oldest</option>
@@ -148,12 +168,20 @@ const Home = () => {
             placeholder="🔍 Search items..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
+<<<<<<< HEAD
             className="sm:p-3 rounded-xl border border-gray-300 bg-white text-gray-700 shadow-sm focus:ring-2 focus:ring-indigo-500 sm:w-auto flex-1 w-auto col-span-2"
+=======
+            className="p-2 sm:p-3 rounded-xl border border-gray-300 bg-white text-gray-700 shadow-sm focus:ring-2 focus:ring-indigo-500 w-full sm:w-auto flex-1"
+>>>>>>> 68487e4b652b7c52f10e49bdc5dcd624cc0796d1
           />
         </div>
 
         {/* 🔹 Grid Items */}
+<<<<<<< HEAD
         <div className="grid gap-5 sm:gap-6 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 px-5">
+=======
+        <div className="grid gap-5 sm:gap-6 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4">
+>>>>>>> 68487e4b652b7c52f10e49bdc5dcd624cc0796d1
           {filteredItems.length > 0 ? (
             filteredItems.map((item) => (
               <div
