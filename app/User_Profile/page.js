@@ -9,9 +9,11 @@ import {
   getDocs,
   updateDoc,
   doc,
+  getDoc,
   query,
   orderBy,
   serverTimestamp,
+  where,
 } from "firebase/firestore";
 import md5 from "crypto-js/md5"; // npm install crypto-js
 
@@ -32,7 +34,6 @@ const UserProfile = () => {
   const [editPostData, setEditPostData] = useState(null);
   const [editImage, setEditImage] = useState(null);
 
-  // Fetch user info & posts
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged(async (currentUser) => {
       if (!currentUser) {
@@ -43,43 +44,97 @@ const UserProfile = () => {
       }
 
       setLoading(true);
-      const userEmail = currentUser.email;
+      const userEmail = currentUser.email || "";
+      const uid = currentUser.uid;
 
-      // Generate Gravatar URL based on email
+      // Generate Gravatar URL
       const hash = md5(userEmail.trim().toLowerCase()).toString();
       const gravatarURL = `https://www.gravatar.com/avatar/${hash}?d=identicon`;
 
-      setUserInfo((prev) => ({
-        ...prev,
-        email: userEmail,
-        profileImage: gravatarURL,
-      }));
+      // 1) Try to fetch user doc by UID (common pattern)
+      // 2) If not found, query users collection for document where email == userEmail
+      // 3) Fallback to auth displayName if Firestore doesn't have name
+      try {
+        let firestoreUser = null;
 
+        // Try doc by uid
+        try {
+          const userDocRefByUid = doc(db, "users", uid);
+          const userSnapByUid = await getDoc(userDocRefByUid);
+          if (userSnapByUid.exists()) {
+            firestoreUser = userSnapByUid.data();
+          }
+        } catch (e) {
+          console.warn("users/{uid} lookup failed (maybe not used):", e);
+        }
+
+        // If not found by uid, try query by email field
+        if (!firestoreUser && userEmail) {
+          try {
+            const q = query(collection(db, "users"), where("email", "==", userEmail));
+            const qSnap = await getDocs(q);
+            if (!qSnap.empty) {
+              // take first matching doc
+              firestoreUser = qSnap.docs[0].data();
+            }
+          } catch (e) {
+            console.warn("users query by email failed:", e);
+          }
+        }
+
+        // Set userInfo using Firestore data if available, otherwise fallback to auth info
+        if (firestoreUser) {
+          setUserInfo({
+            name: firestoreUser.name || currentUser.displayName || "User",
+            email: firestoreUser.email || userEmail,
+            college: firestoreUser.collegeName || "N/A",
+            profileImage: gravatarURL,
+          });
+        } else {
+          setUserInfo({
+            name: currentUser.displayName || "User",
+            email: userEmail,
+            college: "Error",
+            profileImage: gravatarURL,
+          });
+        }
+      } catch (err) {
+        console.error("Error fetching user info:", err);
+        setUserInfo((prev) => ({ ...prev, email: userEmail, profileImage: gravatarURL }));
+      }
+
+      // Fetch posts and filter by either email or uid (handles both app schemas)
       try {
         const q = query(collection(db, "items"), orderBy("timestamp", "desc"));
         const snapshot = await getDocs(q);
 
         const postsData = snapshot.docs
-          .map((doc) => {
-            const d = doc.data();
+          .map((d) => {
+            const data = d.data();
             return {
-              id: doc.id,
-              title: d.title || "Unnamed Item",
-              postType: d.postType || "found",
-              timestamp: d.timestamp || null,
-              description: d.description || "",
-              userEmail: d.userEmail || "",
-              location: d.location || "",
-              category: d.category || d.otherCategory || "Other",
-              image: d.imageURL || "https://i.ibb.co/MDMk4K6v/6f14784a35f5.jpg",
-              contact: d.contact || "",
-              date: d.date || "",
+              id: d.id,
+              title: data.title || "Unnamed Item",
+              postType: data.postType || "found",
+              timestamp: data.timestamp || null,
+              description: data.description || "",
+              userEmail: data.userEmail || "",
+              userId: data.userId || data.userUid || "", // possible uid field
+              location: data.location || "",
+              category: data.category || data.otherCategory || "Other",
+              image: data.imageURL || "https://i.ibb.co/MDMk4K6v/6f14784a35f5.jpg",
+              contact: data.contact || "",
+              date: data.date || "",
             };
           })
-          .filter(
-            (post) =>
-              post.userEmail.trim().toLowerCase() === userEmail.trim().toLowerCase()
-          );
+          .filter((post) => {
+            // Accept if the post's email matches the user's email OR the post's userId/uid matches user's uid
+            const emailMatch =
+              post.userEmail &&
+              userEmail &&
+              post.userEmail.trim().toLowerCase() === userEmail.trim().toLowerCase();
+            const uidMatch = post.userId && post.userId === uid;
+            return emailMatch || uidMatch;
+          });
 
         setUserPosts(postsData);
         setFilteredPosts(postsData);
@@ -93,17 +148,16 @@ const UserProfile = () => {
     return () => unsubscribe();
   }, []);
 
-  // Filter posts
+  // Filters
   const handleFilterChange = (filter) => {
     setSelectedFilter(filter);
-    if (filter === "lost")
-      setFilteredPosts(userPosts.filter((p) => p.postType === "lost"));
+    if (filter === "lost") setFilteredPosts(userPosts.filter((p) => p.postType === "lost"));
     else if (filter === "found")
       setFilteredPosts(userPosts.filter((p) => p.postType === "found"));
     else setFilteredPosts(userPosts);
   };
 
-  // Edit post
+  // Edit post handlers (unchanged)
   const handleEditClick = (post) => {
     setEditPostData(post);
     setEditImage(null);
@@ -125,7 +179,6 @@ const UserProfile = () => {
     try {
       let imageURL = editPostData.image;
 
-      // Upload new image if selected
       if (editImage) {
         const formData = new FormData();
         formData.append("image", editImage);
@@ -168,10 +221,13 @@ const UserProfile = () => {
   };
 
   return (
-    <div className="flex flex-col md:flex-row min-h-screen bg-gray-100">
-      <Sideheader />
+    <div className="md:flex-row min-h-screen bg-blue-100 grid grid-cols-4">
+      
+      <div className="col-span-1">
+        <Sideheader />
+      </div>
 
-      <div className="flex-1 w-full flex flex-col items-center p-4 md:p-8 md:ml-72">
+      <div className="flex-1 w-full col-span-3 items-center p-4 md:p-8">
         {/* Profile Info */}
         <div className="flex flex-col md:flex-row w-full max-w-5xl items-center md:items-start gap-6">
           <div className="flex justify-center md:justify-start md:w-1/3">
@@ -193,10 +249,6 @@ const UserProfile = () => {
             <div className="flex items-center gap-2 text-gray-700">
               <Mail className="text-blue-600 w-5 h-5" />
               <span>{userInfo.email}</span>
-            </div>
-            <div className="flex items-center gap-2 text-gray-700">
-              <Phone className="text-blue-600 w-5 h-5" />
-              <span>{userInfo.phone}</span>
             </div>
           </div>
         </div>
@@ -229,9 +281,7 @@ const UserProfile = () => {
           {loading ? (
             <p className="text-center col-span-full">Loading posts...</p>
           ) : filteredPosts.length === 0 ? (
-            <p className="text-center col-span-full text-gray-600">
-              No posts found.
-            </p>
+            <p className="text-center col-span-full text-gray-600">No posts found.</p>
           ) : (
             filteredPosts.map((post) => (
               <div
@@ -245,18 +295,14 @@ const UserProfile = () => {
                 />
                 <span
                   className={`absolute top-2 left-2 px-2 py-1 text-xs font-semibold rounded ${
-                    post.postType === "lost"
-                      ? "bg-red-100 text-red-600"
-                      : "bg-green-100 text-green-600"
+                    post.postType === "lost" ? "bg-red-100 text-red-600" : "bg-green-100 text-green-600"
                   }`}
                 >
                   {post.postType.toUpperCase()}
                 </span>
 
                 <div className="p-3">
-                  <h2 className="font-semibold text-indigo-800 text-lg line-clamp-1">
-                    {post.title}
-                  </h2>
+                  <h2 className="font-semibold text-indigo-800 text-lg line-clamp-1">{post.title}</h2>
                   <p className="text-gray-600 text-sm mt-1 line-clamp-2">{post.description}</p>
                   <p className="text-gray-700 text-sm mt-1">
                     <span className="font-medium">Category:</span> {post.category}
@@ -288,72 +334,20 @@ const UserProfile = () => {
               </button>
 
               <h2 className="text-xl font-bold text-indigo-700 mb-4">Edit Post</h2>
-
               <form onSubmit={handleEditSubmit} className="space-y-4">
-                <input
-                  type="text"
-                  name="title"
-                  value={editPostData.title}
-                  onChange={handleEditChange}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2"
-                  placeholder="Title"
-                  required
-                />
-                <textarea
-                  name="description"
-                  value={editPostData.description}
-                  onChange={handleEditChange}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2"
-                  placeholder="Description"
-                  required
-                />
-                <input
-                  type="text"
-                  name="location"
-                  value={editPostData.location}
-                  onChange={handleEditChange}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2"
-                  placeholder="Location"
-                  required
-                />
-                <input
-                  type="date"
-                  name="date"
-                  value={editPostData.date}
-                  onChange={handleEditChange}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2"
-                  required
-                />
-                <input
-                  type="text"
-                  name="category"
-                  value={editPostData.category}
-                  onChange={handleEditChange}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2"
-                  placeholder="Category"
-                  required
-                />
-                <input
-                  type="text"
-                  name="contact"
-                  value={editPostData.contact}
-                  onChange={handleEditChange}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2"
-                  placeholder="Contact Info"
-                  required
-                />
+                <input type="text" name="title" value={editPostData.title} onChange={handleEditChange} className="w-full border border-gray-300 rounded-lg px-3 py-2" placeholder="Title" required />
+                <textarea name="description" value={editPostData.description} onChange={handleEditChange} className="w-full border border-gray-300 rounded-lg px-3 py-2" placeholder="Description" required />
+                <input type="text" name="location" value={editPostData.location} onChange={handleEditChange} className="w-full border border-gray-300 rounded-lg px-3 py-2" placeholder="Location" required />
+                <input type="date" name="date" value={editPostData.date} onChange={handleEditChange} className="w-full border border-gray-300 rounded-lg px-3 py-2" required />
+                <input type="text" name="category" value={editPostData.category} onChange={handleEditChange} className="w-full border border-gray-300 rounded-lg px-3 py-2" placeholder="Category" required />
+                <input type="text" name="contact" value={editPostData.contact} onChange={handleEditChange} className="w-full border border-gray-300 rounded-lg px-3 py-2" placeholder="Contact Info" required />
                 <div>
                   <label className="block mb-1 font-medium">Update Image</label>
                   <input type="file" accept="image/*" onChange={handleImageChange} />
                   {editImage && <p className="text-sm mt-1">{editImage.name}</p>}
                 </div>
 
-                <button
-                  type="submit"
-                  className="w-full bg-indigo-600 text-white py-2 rounded-lg hover:bg-indigo-700 transition-all duration-300"
-                >
-                  Update Post
-                </button>
+                <button type="submit" className="w-full bg-indigo-600 text-white py-2 rounded-lg hover:bg-indigo-700 transition-all duration-300">Update Post</button>
               </form>
             </div>
           </div>

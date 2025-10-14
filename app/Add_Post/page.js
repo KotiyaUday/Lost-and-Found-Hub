@@ -1,7 +1,13 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import { auth, db } from "../../lib/firebase";
-import { collection, addDoc, serverTimestamp } from "firebase/firestore";
+import {
+  collection,
+  addDoc,
+  serverTimestamp,
+  getDoc,
+  doc,
+} from "firebase/firestore";
 import Sideheader from "@/Components/Sideheader";
 
 const AddPost = () => {
@@ -24,14 +30,31 @@ const AddPost = () => {
 
   useEffect(() => setHydrated(true), []);
 
+  // ✅ Fetch user's college name from Firestore
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged(async (u) => {
       setUser(u);
       if (u) {
-        // You can fetch college info from Firestore users collection if needed
-        setCollege("RK University");
+        try {
+          console.log("Fetching user college...");
+          const userRef = doc(db, "users", u.uid);
+          const userSnap = await getDoc(userRef);
+
+          if (userSnap.exists()) {
+            const userData = userSnap.data();
+            setCollege(userData.collegeName || "Not Specified");
+            console.log("College:", userData.collegeName);
+          } else {
+            console.warn("User document not found in Firestore!");
+            setCollege("Not Specified");
+          }
+        } catch (error) {
+          console.error("Error fetching college:", error);
+          setCollege("Not Specified");
+        }
       }
     });
+
     return () => unsubscribe();
   }, []);
 
@@ -68,7 +91,6 @@ const AddPost = () => {
       !form.description.trim() ||
       !form.location.trim() ||
       !form.date.trim() ||
-      !form.contact.trim() ||
       !form.category.trim() ||
       (form.category === "Other" && !form.otherCategory.trim())
     ) {
@@ -130,7 +152,7 @@ const AddPost = () => {
         <Sideheader />
       </div>
 
-      {/* Centered Form Section */}
+      {/* Form Section */}
       <div className="flex-1 flex justify-center items-center py-10 px-4">
         <div className="w-full max-w-3xl bg-white/90 backdrop-blur-md border border-gray-200 shadow-xl rounded-2xl p-8">
           <h2 className="text-3xl font-bold text-center text-indigo-700 mb-8">
@@ -142,6 +164,15 @@ const AddPost = () => {
               Please log in to post an item.
             </p>
           )}
+
+          <div className="text-center mb-5">
+            <p className="text-gray-700 font-medium">
+              College:{" "}
+              <span className="text-indigo-600 font-semibold">
+                {college || "Loading..."}
+              </span>
+            </p>
+          </div>
 
           {/* Tabs */}
           <div className="flex justify-center mb-6">
@@ -270,7 +301,7 @@ const AddPost = () => {
             {/* Contact Info */}
             <div>
               <label className="block font-medium text-gray-700 mb-1">
-                Contact Info *
+                Contact Info
               </label>
               <input
                 type="text"
@@ -279,7 +310,6 @@ const AddPost = () => {
                 onChange={handleChange}
                 placeholder="Phone or Email"
                 className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-indigo-500"
-                required
               />
             </div>
 

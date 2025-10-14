@@ -80,7 +80,7 @@ const Home = () => {
     .filter((i) =>
       searchTerm
         ? i.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          i.description.toLowerCase().includes(searchTerm.toLowerCase())
+        i.description.toLowerCase().includes(searchTerm.toLowerCase())
         : true
     )
     .sort((a, b) => {
@@ -161,11 +161,10 @@ const Home = () => {
                 className="bg-white rounded-2xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden border border-indigo-100 relative"
               >
                 <span
-                  className={`absolute top-4 left-4 text-xs sm:text-sm font-semibold px-3 py-1 rounded-full ${
-                    item.status === "Lost"
+                  className={`absolute top-4 left-4 text-xs sm:text-sm font-semibold px-3 py-1 rounded-full ${item.status === "Lost"
                       ? "bg-red-100 text-red-600"
                       : "bg-green-100 text-green-600"
-                  }`}
+                    }`}
                 >
                   {item.status}
                 </span>
@@ -183,23 +182,22 @@ const Home = () => {
                     <h2 className="text-lg sm:text-xl font-semibold text-indigo-800 line-clamp-1">
                       {item.title}
                     </h2>
-                    <p className="text-gray-600 text-sm mt-1 line-clamp-2">
-                      {item.description}
-                    </p>
+                    {item.postType == 'lost' && (
+                      <p className="text-gray-600 text-sm mt-1 line-clamp-2">
+                        {item.description}
+                      </p>)}
                     <p className="text-gray-700 text-sm mt-2">
                       <span className="font-medium">College:</span> {item.college}
                     </p>
                   </div>
                 </div>
-
-                {item.postType === "lost" && (
+                
                   <button
                     onClick={() => handleSendMessage(item)}
                     className="w-full bg-indigo-500 text-white py-2 hover:bg-indigo-600 transition-all duration-300 text-sm sm:text-base font-medium"
                   >
                     💬 Message Owner
                   </button>
-                )}
               </div>
             ))
           ) : (
@@ -254,9 +252,7 @@ const Home = () => {
                   <span className="font-semibold">Location:</span>{" "}
                   {selectedPost.location}
                 </p>
-                <p className="text-gray-700 mb-4">{selectedPost.description}</p>
-
-                {selectedPost.postType === "lost" && (
+                {selectedPost.status === 'Lost' && (<p className="text-gray-700 mb-4">{selectedPost.description}</p>)}
                   <button
                     onClick={() =>
                       window.location.href = `/Chat?otherUser=${selectedPost.userEmail}&itemImage=${selectedPost.image}`
@@ -265,7 +261,6 @@ const Home = () => {
                   >
                     💬 Message Owner
                   </button>
-                )}
               </div>
             </div>
           </div>

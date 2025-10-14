@@ -32,9 +32,8 @@ const Sideheader = () => {
 
   return (
     <div
-      className={`h-screen bg-gradient-to-b from-blue-100 to-indigo-200 border-r-4 border-indigo-300 shadow-2xl flex flex-col transition-all duration-300 ${
-        isOpen ? "w-72" : "w-20"
-      }`}
+      className={`h-screen bg-gradient-to-b from-blue-100 to-indigo-200 border-r-4 border-indigo-300 shadow-2xl flex flex-col transition-all duration-300 ${isOpen ? "w-72" : "w-15"
+        }`}
     >
       {/* 🔹 Top Section */}
       <div className="flex flex-col items-end justify-between px-4 py-5">
@@ -46,9 +45,8 @@ const Sideheader = () => {
           <Menu className="w-6 h-6 text-indigo-700" />
         </button>
         <div
-          className={`flex items-center gap-3 transition-all duration-300 ${
-            !isOpen && "opacity-0 hidden"
-          }`}
+          className={`flex items-center gap-3 transition-all duration-300 ${!isOpen && "opacity-0 hidden"
+            }`}
         >
           <img src="/assets/logo.png" alt="Logo" className="h-60 w-60" />
         </div>
@@ -57,37 +55,34 @@ const Sideheader = () => {
 
       {/* 🔹 Navigation Links */}
       <nav className="flex flex-col flex-1 mt-5 gap-2">
-  {navItems.map((item, index) => {
-    const isActive = pathname === item.href;
+        {navItems.map((item, index) => {
+          const isActive = pathname === item.href;
 
-    return (
-      <Link
-        key={index}
-        href={item.href}
-        className={`group flex items-center gap-4 px-5 py-3 rounded-xl mx-2 transition-all duration-200 ease-in-out ${
-          isActive
-            ? "bg-indigo-600 text-white shadow-lg"
-            : "text-gray-800 hover:bg-indigo-500 hover:text-white"
-        }`}
-      >
-        <item.icon
-          className={`w-6 h-6 transition-all duration-200 ${
-            isActive ? "text-white" : "text-indigo-600 group-hover:text-white"
-          } ${!isOpen && "mx-auto"}`}
-        />
-        {isOpen && (
-          <span
-            className={`font-medium tracking-wide text-base transition-transform duration-150 ${
-              isActive ? "translate-x-1" : "group-hover:translate-x-1"
-            }`}
-          >
-            {item.name}
-          </span>
-        )}
-      </Link>
-    );
-  })}
-</nav>
+          return (
+            <Link
+              key={index}
+              href={item.href}
+              className={`group flex items-center gap-4 px-5 py-3 rounded-xl mx-2 transition-all duration-200 ease-in-out ${isActive
+                  ? "bg-indigo-600 text-white shadow-lg"
+                  : "text-gray-800 hover:bg-indigo-500 hover:text-white"
+                }`}
+            >
+              <item.icon
+                className={`w-6 h-6 transition-all duration-200 ${isActive ? "text-white" : "text-indigo-600 group-hover:text-white"
+                  } ${!isOpen && "mx-auto"}`}
+              />
+              {isOpen && (
+                <span
+                  className={`font-medium tracking-wide text-base transition-transform duration-150 ${isActive ? "translate-x-1" : "group-hover:translate-x-1"
+                    }`}
+                >
+                  {item.name}
+                </span>
+              )}
+            </Link>
+          );
+        })}
+      </nav>
 
 
       <button
@@ -99,9 +94,8 @@ const Sideheader = () => {
 
       {/* 🔹 Footer Section */}
       <div
-        className={`mt-auto px-4 py-4 text-sm text-gray-600 border-t border-indigo-300 ${
-          !isOpen && "hidden"
-        }`}
+        className={`mt-auto px-4 py-4 text-sm text-gray-600 border-t border-indigo-300 ${!isOpen && "hidden"
+          }`}
       >
         <p className="text-center font-medium">
           © {new Date().getFullYear()} Lost & Found Hub

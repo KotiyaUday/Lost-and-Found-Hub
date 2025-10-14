@@ -13,19 +13,17 @@ import {
   serverTimestamp,
 } from "firebase/firestore";
 import { useSearchParams } from "next/navigation";
-import Sideheader from "@/Components/Sideheader";
 
 export default function ChatPage() {
   const searchParams = useSearchParams();
-  const otherUserEmail = searchParams.get("otherUser"); // Other person's email
-  const itemId = searchParams.get("itemId"); // Item id
-  const itemTitle = searchParams.get("itemTitle"); // Item title
-  const itemImage = searchParams.get("itemImage"); // Item image URL
+  const otherUserEmail = searchParams.get("otherUser");
+  const itemId = searchParams.get("itemId");
+  const itemTitle = searchParams.get("itemTitle");
+  const itemImage = searchParams.get("itemImage");
 
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState("");
   const [user, setUser] = useState(null);
-
   const chatEndRef = useRef(null);
 
   // Track auth user
@@ -34,15 +32,13 @@ export default function ChatPage() {
     return () => unsubscribe();
   }, []);
 
-  // Generate unique chatId based on emails
-  const chatId = user && otherUserEmail
-    ? [user.email, otherUserEmail].sort().join("_")
-    : null;
+  // Generate unique chatId
+  const chatId =
+    user && otherUserEmail ? [user.email, otherUserEmail].sort().join("_") : null;
 
-  // Fetch chat messages from Firestore
+  // Fetch messages
   useEffect(() => {
     if (!chatId) return;
-
     const messagesRef = collection(db, "chats", chatId, "messages");
     const q = query(messagesRef, orderBy("timestamp", "asc"));
 
@@ -52,8 +48,6 @@ export default function ChatPage() {
         ...doc.data(),
       }));
       setMessages(msgs);
-
-      // Auto scroll
       chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
     });
 
@@ -65,7 +59,7 @@ export default function ChatPage() {
     if (!newMessage.trim() || !user || !otherUserEmail) return;
 
     try {
-      // 1️⃣ Create or update parent chat document
+      // Update chat metadata
       await setDoc(
         doc(db, "chats", chatId),
         {
@@ -79,7 +73,7 @@ export default function ChatPage() {
         { merge: true }
       );
 
-      // 2️⃣ Add message to messages subcollection
+      // Add message
       await addDoc(collection(db, "chats", chatId, "messages"), {
         sender: user.email,
         receiver: otherUserEmail,
@@ -103,7 +97,7 @@ export default function ChatPage() {
 
       {/* Chat Section */}
       <div className="flex flex-1 flex-col">
-        {otherUser ? (
+        {otherUserEmail ? (
           <>
             {/* Header */}
             <div className="p-4 bg-white/70 backdrop-blur-md border-b shadow-sm flex items-center space-x-4">
@@ -116,52 +110,60 @@ export default function ChatPage() {
               )}
               <div>
                 <h2 className="text-lg md:text-xl font-semibold text-indigo-700">
-                  💬 Chat with {otherUser}
+                  💬 Chat with {otherUserEmail}
                 </h2>
-                <p className="text-sm text-gray-500">Discuss this item</p>
+                <p className="text-sm text-gray-500">
+                  Discuss this item: {itemTitle}
+                </p>
               </div>
             </div>
 
-        {/* Messages */}
-        <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3 md:px-8 md:py-5">
-          {messages.map((msg) => (
-            <div
-              key={msg.id}
-              className={`flex ${
-                msg.sender === user?.email ? "justify-end" : "justify-start"
-              }`}
-            >
-              <div
-                className={`max-w-[75%] md:max-w-[60%] px-4 py-2 rounded-2xl text-sm md:text-base shadow-md ${
-                  msg.sender === user?.email
-                    ? "bg-indigo-600 text-white rounded-br-none"
-                    : "bg-gray-200 text-gray-800 rounded-bl-none"
-                }`}
+            {/* Messages */}
+            <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3 md:px-8 md:py-5">
+              {messages.map((msg) => (
+                <div
+                  key={msg.id}
+                  className={`flex ${
+                    msg.sender === user?.email ? "justify-end" : "justify-start"
+                  }`}
+                >
+                  <div
+                    className={`max-w-[75%] md:max-w-[60%] px-4 py-2 rounded-2xl text-sm md:text-base shadow-md ${
+                      msg.sender === user?.email
+                        ? "bg-indigo-600 text-white rounded-br-none"
+                        : "bg-gray-200 text-gray-800 rounded-bl-none"
+                    }`}
+                  >
+                    {msg.text}
+                  </div>
+                </div>
+              ))}
+              <div ref={chatEndRef}></div>
+            </div>
+
+            {/* Input Box */}
+            <div className="p-3 md:p-4 border-t bg-white flex items-center space-x-3">
+              <input
+                type="text"
+                placeholder="Type your message..."
+                className="flex-1 border border-gray-300 rounded-full px-4 py-2 text-sm md:text-base focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                value={newMessage}
+                onChange={(e) => setNewMessage(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && sendMessage()}
+              />
+              <button
+                onClick={sendMessage}
+                className="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2 rounded-full font-medium transition-all duration-200"
               >
-                {msg.text}
-              </div>
+                Send
+              </button>
             </div>
-          ))}
-          <div ref={chatEndRef}></div>
-        </div>
-
-        {/* Input Box */}
-        <div className="p-3 md:p-4 border-t bg-white flex items-center space-x-3">
-          <input
-            type="text"
-            placeholder="Type your message..."
-            className="flex-1 border border-gray-300 rounded-full px-4 py-2 text-sm md:text-base focus:outline-none focus:ring-2 focus:ring-indigo-400"
-            value={newMessage}
-            onChange={(e) => setNewMessage(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && sendMessage()}
-          />
-          <button
-            onClick={sendMessage}
-            className="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2 rounded-full font-medium transition-all duration-200"
-          >
-            Send
-          </button>
-        </div>
+          </>
+        ) : (
+          <div className="flex items-center justify-center h-full text-gray-500">
+            Select a user to start chatting.
+          </div>
+        )}
       </div>
     </div>
   );
