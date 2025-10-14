@@ -1,3 +1,5 @@
+// app/ChatApp/page.js
+
 "use client";
 import React, { useState, useEffect, useRef } from "react";
 import { db, auth } from "@/lib/firebase";
@@ -42,7 +44,7 @@ export default function ChatApp() {
 
       setChats(chatList);
 
-      // --- Fetch names of all participants (for displaying names instead of emails)
+      // Fetch display names
       const emailsToFetch = [
         ...new Set(
           chatList.flatMap((chat) =>
@@ -50,6 +52,8 @@ export default function ChatApp() {
           )
         ),
       ];
+
+      if (emailsToFetch.length === 0) return;
 
       const usersQuery = query(
         collection(db, "users"),
@@ -99,7 +103,6 @@ export default function ChatApp() {
         (email) => email !== user.email
       );
 
-      // Update parent chat
       await setDoc(
         doc(db, "chats", selectedChat.id),
         {
@@ -109,7 +112,6 @@ export default function ChatApp() {
         { merge: true }
       );
 
-      // Add message
       await addDoc(collection(db, "chats", selectedChat.id, "messages"), {
         sender: user.email,
         receiver: otherUserEmail,
@@ -178,13 +180,12 @@ export default function ChatApp() {
                       (email) => email !== user.email
                     )
                   ] ||
-                selectedChat.participants.find(
-                  (email) => email !== user.email
-                )
-              }`
+                  selectedChat.participants.find(
+                    (email) => email !== user.email
+                  )
+                }`
               : "Select a chat"}
           </div>
-          {/* {selectedChat && <div className="text-sm text-gray-500">Online</div>} */}
         </div>
 
         {/* Messages Area */}
