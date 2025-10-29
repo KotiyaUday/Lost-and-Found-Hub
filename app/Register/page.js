@@ -1,4 +1,5 @@
 "use client";
+
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { auth, db } from "../../lib/firebase";
@@ -17,22 +18,17 @@ const Signup = () => {
   const [loading, setLoading] = useState(true);
   const [showExtraForm, setShowExtraForm] = useState(false);
 
-  // form states
   const [name, setName] = useState("");
   const [collegeName, setCollegeName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-
-  // Google temp user
   const [googleUser, setGoogleUser] = useState(null);
 
-  // ✅ Check if user already signed in
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, async (u) => {
       try {
         if (u) {
-          console.log("onAuthStateChanged -> user:", u.uid);
           if (showExtraForm) {
             setUser(u);
             setLoading(false);
@@ -52,12 +48,8 @@ const Signup = () => {
               setCollegeName(data.collegeName || "");
               setShowExtraForm(true);
             }
-          } else {
-            setUser(u);
-          }
-        } else {
-          setUser(null);
-        }
+          } else setUser(u);
+        } else setUser(null);
       } catch (err) {
         console.error("onAuthStateChanged error:", err);
       } finally {
@@ -67,7 +59,6 @@ const Signup = () => {
     return () => unsub();
   }, [router, showExtraForm]);
 
-  // ✅ Google sign-up handler
   const handleGoogleSignUp = async () => {
     try {
       const provider = new GoogleAuthProvider();
@@ -94,7 +85,6 @@ const Signup = () => {
     }
   };
 
-  // ✅ Submit Google user extra form
   const handleGoogleFormSubmit = async (e) => {
     e.preventDefault();
     if (!googleUser && !user) {
@@ -130,7 +120,6 @@ const Signup = () => {
     }
   };
 
-  // ✅ Email & Password Signup
   const handleEmailSignUp = async (e) => {
     e.preventDefault();
 
@@ -140,14 +129,12 @@ const Signup = () => {
     }
 
     try {
-      // 🔹 Check if email is already registered
       const existingMethods = await fetchSignInMethodsForEmail(auth, email);
       if (existingMethods.length > 0) {
         alert("This email is already registered. Please log in instead.");
         return;
       }
 
-      // 🔹 Create new user
       const res = await createUserWithEmailAndPassword(auth, email, password);
       const userRef = doc(db, "users", res.user.uid);
 
@@ -175,19 +162,21 @@ const Signup = () => {
       </div>
     );
 
-  // ✅ Google extra info form
   if (showExtraForm) {
     return (
-      <div className="min-h-screen w-full bg-gray-200 flex items-center justify-center p-4">
-        <div className="bg-white rounded-2xl shadow-2xl shadow-black p-8 w-full max-w-md">
-          <h1 className="text-2xl font-semibold mb-6 text-center text-gray-800">
+      <div className="min-h-screen w-full bg-gray-100 flex items-center justify-center p-4">
+        <div className="bg-white rounded-2xl shadow-2xl p-6 sm:p-8 w-full max-w-md">
+          <h1 className="text-2xl sm:text-3xl font-semibold mb-6 text-center text-gray-800">
             Complete Your Profile
           </h1>
-          <form onSubmit={handleGoogleFormSubmit} className="flex flex-col gap-4">
+          <form
+            onSubmit={handleGoogleFormSubmit}
+            className="flex flex-col gap-4"
+          >
             <input
               type="text"
               placeholder="Full Name"
-              className="border border-gray-400 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-400"
+              className="border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-400 focus:outline-none text-sm sm:text-base"
               value={name}
               onChange={(e) => setName(e.target.value)}
               required
@@ -195,15 +184,12 @@ const Signup = () => {
             <input
               type="text"
               placeholder="College Name"
-              className="border border-gray-400 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-400"
+              className="border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-400 focus:outline-none text-sm sm:text-base"
               value={collegeName}
               onChange={(e) => setCollegeName(e.target.value)}
               required
             />
-            <button
-              type="submit"
-              className="bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition-all duration-200"
-            >
+            <button className="bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition-all duration-200 text-sm sm:text-base">
               Submit
             </button>
           </form>
@@ -212,12 +198,11 @@ const Signup = () => {
     );
   }
 
-  // ✅ Default Signup Page
   return (
-    <div className="min-h-screen w-full bg-gray-200 flex items-center justify-center p-4">
-      <div className="bg-white flex flex-col md:flex-row rounded-2xl shadow-2xl shadow-black w-full max-w-5xl overflow-hidden">
+    <div className="min-h-screen w-full bg-gray-100 flex items-center justify-center p-4">
+      <div className="bg-white flex flex-col md:flex-row rounded-2xl shadow-2xl w-full max-w-5xl overflow-hidden">
         {/* Image Section */}
-        <div className="md:flex-1 w-full h-56 sm:h-72 md:h-auto">
+        <div className="md:flex-1 w-full h-64 sm:h-72 md:h-auto">
           <img
             src="/assets/registration.jpg"
             alt="Signup"
@@ -238,52 +223,44 @@ const Signup = () => {
             <input
               type="text"
               placeholder="Full Name"
-              className="border border-gray-400 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400 text-sm sm:text-base"
+              className="border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400 text-sm sm:text-base"
               value={name}
               onChange={(e) => setName(e.target.value)}
               required
             />
-
             <input
               type="text"
               placeholder="College Name"
-              className="border border-gray-400 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400 text-sm sm:text-base"
+              className="border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400 text-sm sm:text-base"
               value={collegeName}
               onChange={(e) => setCollegeName(e.target.value)}
               required
             />
-
             <input
               type="email"
               placeholder="Email"
-              className="border border-gray-400 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400 text-sm sm:text-base"
+              className="border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400 text-sm sm:text-base"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
             />
-
             <input
               type="password"
               placeholder="Password"
-              className="border border-gray-400 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400 text-sm sm:text-base"
+              className="border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400 text-sm sm:text-base"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
             />
-
             <input
               type="password"
               placeholder="Confirm Password"
-              className="border border-gray-400 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400 text-sm sm:text-base"
+              className="border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400 text-sm sm:text-base"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               required
             />
-
-            <button
-              type="submit"
-              className="bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 active:scale-95 transition-all duration-200 text-sm sm:text-base"
-            >
+            <button className="bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 active:scale-95 transition-all duration-200 text-sm sm:text-base">
               Sign Up
             </button>
           </form>
@@ -298,14 +275,14 @@ const Signup = () => {
           {/* Google Sign-Up */}
           <button
             onClick={handleGoogleSignUp}
-            className="flex items-center justify-center gap-3 bg-white border border-black rounded-lg px-5 py-3 hover:shadow-xl active:scale-95 transition-all duration-200 w-full max-w-sm"
+            className="flex items-center justify-center gap-3 bg-white border border-gray-300 rounded-lg px-5 py-3 hover:shadow-md active:scale-95 transition-all duration-200 w-full max-w-sm"
           >
             <img
               src="https://www.svgrepo.com/show/475656/google-color.svg"
               alt="Google logo"
-              className="w-6 h-6"
+              className="w-5 h-5 sm:w-6 sm:h-6"
             />
-            <span className="font-medium text-black text-sm sm:text-base md:text-base">
+            <span className="font-medium text-black text-sm sm:text-base">
               Sign up with Google
             </span>
           </button>

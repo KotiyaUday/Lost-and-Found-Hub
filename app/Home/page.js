@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { db, auth } from "@/lib/firebase";
-import { collection, getDocs, orderBy, query } from "firebase/firestore";
+import { collection, getDocs, query, orderBy } from "firebase/firestore";
 import Sideheader from "@/Components/Sideheader";
 
 const Home = () => {
@@ -20,7 +20,6 @@ const Home = () => {
 
   const currentUserEmail = auth.currentUser?.email || "";
 
-  // Fetch all items
   useEffect(() => {
     const fetchItems = async () => {
       try {
@@ -40,7 +39,6 @@ const Home = () => {
             location: d.location || "Unknown",
             contact: d.contact || "N/A",
             description: d.description || "",
-            time: d.date || "Not Available",
             timestamp: d.timestamp || null,
             userEmail: d.userEmail || "",
           };
@@ -73,19 +71,18 @@ const Home = () => {
     )}`;
   };
 
-  // Filter + search
   const filteredItems = items
     .filter((i) => (college ? i.college === college : true))
     .filter((i) => (category ? i.category === category : true))
     .filter((i) =>
       searchTerm
         ? i.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        i.description.toLowerCase().includes(searchTerm.toLowerCase())
+          i.description.toLowerCase().includes(searchTerm.toLowerCase())
         : true
     )
     .sort((a, b) => {
-      if (sortOrder === "asc") return new Date(a.time) - new Date(b.time);
-      if (sortOrder === "desc") return new Date(b.time) - new Date(a.time);
+      if (sortOrder === "asc") return a.timestamp - b.timestamp;
+      if (sortOrder === "desc") return b.timestamp - a.timestamp;
       return 0;
     });
 
@@ -99,7 +96,7 @@ const Home = () => {
   return (
     <div className="flex flex-col md:flex-row min-h-screen bg-gradient-to-b from-blue-50 to-indigo-100">
       {/* Sidebar */}
-      <div className="md:w-64 w-full sticky top-0 z-20 bg-white shadow-md md:h-screen">
+      <div className="md:w-72 w-full sticky top-0 z-20">
         <Sideheader />
       </div>
 
@@ -109,12 +106,12 @@ const Home = () => {
           🧭 Explore Lost & Found Items
         </h1>
 
-        {/* 🔹 Filters */}
-        <div className="grid grid-cols-5 grid-rows-1 gap-3 sm:gap-4 justify-center mb-6 px-5">
+        {/* Filters */}
+        <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mb-6 flex-wrap justify-center">
           <select
             value={college}
             onChange={(e) => setCollege(e.target.value)}
-            className="p-2 sm:p-3 rounded-xl border border-gray-300 bg-white text-gray-700 shadow-sm focus:ring-2 focus:ring-indigo-500 w-full sm:w-auto col-span-1"
+            className="p-2 sm:p-3 rounded-xl border border-gray-300 bg-white text-gray-700 shadow-sm focus:ring-2 focus:ring-indigo-500 w-full sm:max-w-xs"
           >
             <option value="">🎓 Select College</option>
             {colleges.map((clg, idx) => (
@@ -125,7 +122,7 @@ const Home = () => {
           <select
             value={category}
             onChange={(e) => setCategory(e.target.value)}
-            className="p-2 sm:p-3 rounded-xl border border-gray-300 bg-white text-gray-700 shadow-sm focus:ring-2 focus:ring-indigo-500 w-full sm:w-auto col-span-1"
+            className="p-2 sm:p-3 rounded-xl border border-gray-300 bg-white text-gray-700 shadow-sm focus:ring-2 focus:ring-indigo-500 w-full sm:max-w-xs"
           >
             <option value="">📦 Category</option>
             {categories.map((cat, idx) => (
@@ -136,7 +133,7 @@ const Home = () => {
           <select
             value={sortOrder}
             onChange={(e) => setSortOrder(e.target.value)}
-            className="p-2 sm:p-3 rounded-xl border border-gray-300 bg-white text-gray-700 shadow-sm focus:ring-2 focus:ring-indigo-500 sm:w-auto col-span-1"
+            className="p-2 sm:p-3 rounded-xl border border-gray-300 bg-white text-gray-700 shadow-sm focus:ring-2 focus:ring-indigo-500 w-full sm:max-w-xs"
           >
             <option value="">🕒 Sort</option>
             <option value="asc">Oldest</option>
@@ -148,56 +145,60 @@ const Home = () => {
             placeholder="🔍 Search items..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="sm:p-3 rounded-xl border border-gray-300 bg-white text-gray-700 shadow-sm focus:ring-2 focus:ring-indigo-500 sm:w-auto flex-1 w-auto col-span-2"
+            className="p-2 sm:p-3 rounded-xl border border-gray-300 bg-white text-gray-700 shadow-sm focus:ring-2 focus:ring-indigo-500 w-full sm:flex-1"
           />
         </div>
 
-        {/* 🔹 Grid Items */}
-        <div className="grid gap-5 sm:gap-6 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 px-5">
+        {/* Grid Items */}
+        <div className="grid gap-5 sm:gap-6 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4">
           {filteredItems.length > 0 ? (
             filteredItems.map((item) => (
               <div
                 key={item.id}
-                className="bg-white rounded-2xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden border border-indigo-100 relative"
+                className="bg-white rounded-2xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden border border-indigo-100 flex flex-col relative"
               >
                 <span
-                  className={`absolute top-4 left-4 text-xs sm:text-sm font-semibold px-3 py-1 rounded-full ${item.status === "Lost"
+                  className={`absolute top-4 left-4 text-xs sm:text-sm font-semibold px-3 py-1 rounded-full ${
+                    item.status === "Lost"
                       ? "bg-red-100 text-red-600"
                       : "bg-green-100 text-green-600"
-                    }`}
+                  }`}
                 >
                   {item.status}
                 </span>
 
                 <div
-                  className="cursor-pointer"
+                  className="cursor-pointer flex-1"
                   onClick={() => setSelectedPost(item)}
                 >
-                  <img
-                    src={item.image}
-                    alt={item.title}
-                    className="h-48 sm:h-56 w-full object-cover hover:scale-105 transition-transform duration-500"
-                  />
+                  <div className="w-full h-60 sm:h-72 md:h-60 xl:h-64 overflow-hidden rounded-t-2xl">
+                    <img
+                      src={item.image}
+                      alt={item.title}
+                      className="w-full h-full object-cover object-center hover:scale-105 transition-transform duration-500"
+                    />
+                  </div>
                   <div className="p-4">
                     <h2 className="text-lg sm:text-xl font-semibold text-indigo-800 line-clamp-1">
                       {item.title}
                     </h2>
-                    {item.postType == 'lost' && (
+                    {item.postType === "lost" && (
                       <p className="text-gray-600 text-sm mt-1 line-clamp-2">
                         {item.description}
-                      </p>)}
+                      </p>
+                    )}
                     <p className="text-gray-700 text-sm mt-2">
                       <span className="font-medium">College:</span> {item.college}
                     </p>
                   </div>
                 </div>
-                
-                  <button
-                    onClick={() => handleSendMessage(item)}
-                    className="w-full bg-indigo-500 text-white py-2 hover:bg-indigo-600 transition-all duration-300 text-sm sm:text-base font-medium"
-                  >
-                    💬 Message Owner
-                  </button>
+
+                <button
+                  onClick={() => handleSendMessage(item)}
+                  className="w-full bg-indigo-500 text-white py-2 hover:bg-indigo-600 transition-all duration-300 text-sm sm:text-base font-medium rounded-b-2xl"
+                >
+                  💬 Message Owner
+                </button>
               </div>
             ))
           ) : (
@@ -207,10 +208,10 @@ const Home = () => {
           )}
         </div>
 
-        {/* 🔹 Modal */}
+        {/* Modal */}
         {selectedPost && (
-          <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4">
-            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden relative animate-fadeIn">
+          <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4 overflow-y-auto">
+            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md md:max-w-lg lg:max-w-xl overflow-hidden relative animate-fadeIn">
               <button
                 onClick={() => setSelectedPost(null)}
                 className="absolute top-3 right-3 text-gray-700 hover:text-red-500 text-2xl font-bold"
@@ -218,17 +219,19 @@ const Home = () => {
                 &times;
               </button>
 
-              <img
-                src={selectedPost.image}
-                alt={selectedPost.title}
-                className="w-full h-64 object-cover"
-              />
+              <div className="w-full h-64 overflow-hidden">
+                <img
+                  src={selectedPost.image}
+                  alt={selectedPost.title}
+                  className="w-full h-full object-cover object-center"
+                />
+              </div>
 
-              <div className="p-5">
+              <div className="p-5 flex flex-col gap-2">
                 <h2 className="text-2xl font-bold text-indigo-800 mb-2">
                   {selectedPost.title}
                 </h2>
-                <p className="text-gray-700 mb-2">
+                <p className="text-gray-700">
                   <span className="font-semibold">Status:</span>{" "}
                   <span
                     className={
@@ -240,27 +243,29 @@ const Home = () => {
                     {selectedPost.status}
                   </span>
                 </p>
-                <p className="text-gray-700 mb-2">
+                <p className="text-gray-700">
                   <span className="font-semibold">College:</span>{" "}
                   {selectedPost.college}
                 </p>
-                <p className="text-gray-700 mb-2">
+                <p className="text-gray-700">
                   <span className="font-semibold">Category:</span>{" "}
                   {selectedPost.category}
                 </p>
-                <p className="text-gray-700 mb-2">
+                <p className="text-gray-700">
                   <span className="font-semibold">Location:</span>{" "}
                   {selectedPost.location}
                 </p>
-                {selectedPost.status === 'Lost' && (<p className="text-gray-700 mb-4">{selectedPost.description}</p>)}
-                  <button
-                    onClick={() =>
-                      window.location.href = `/Chat?otherUser=${selectedPost.userEmail}&itemImage=${selectedPost.image}`
-                    }
-                    className="w-full bg-indigo-500 text-white py-2 rounded-lg hover:bg-indigo-600 transition-all duration-300"
-                  >
-                    💬 Message Owner
-                  </button>
+                {selectedPost.status === "Lost" && (
+                  <p className="text-gray-700">{selectedPost.description}</p>
+                )}
+                <button
+                  onClick={() =>
+                    window.location.href = `/Chat?otherUser=${selectedPost.userEmail}&itemImage=${selectedPost.image}`
+                  }
+                  className="w-full bg-indigo-500 text-white py-2 rounded-lg hover:bg-indigo-600 transition-all duration-300 mt-2"
+                >
+                  💬 Message Owner
+                </button>
               </div>
             </div>
           </div>

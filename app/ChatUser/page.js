@@ -4,10 +4,12 @@ import { db, auth } from "@/lib/firebase";
 import { collection, query, onSnapshot, orderBy } from "firebase/firestore";
 import { useRouter } from "next/navigation";
 import Sideheader from "@/Components/Sideheader";
+import { Menu, X } from "lucide-react";
 
 export default function ChatUserList() {
   const [chats, setChats] = useState([]);
   const [user, setUser] = useState(null);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const router = useRouter();
 
   // Track logged-in user
@@ -36,17 +38,45 @@ export default function ChatUserList() {
   // Handle click on user to redirect to chat page
   const openChat = (chat) => {
     const otherUserEmail = chat.participants.find((email) => email !== user.email);
-    router.push(`/Chat?chatId=${chat.id}&otherUser=${encodeURIComponent(otherUserEmail)}&itemId=${chat.itemId}`);
+    router.push(
+      `/Chat?chatId=${chat.id}&otherUser=${encodeURIComponent(
+        otherUserEmail
+      )}&itemId=${chat.itemId || ""}`
+    );
+    setSidebarOpen(false); // close sidebar on mobile
   };
 
   return (
-    <div className="flex h-screen bg-gray-100">
-      {/* Sidebar */}
-      <div className="hidden md:block w-64 border-r bg-white shadow-md">
+    <div className="h-screen w-full flex bg-gray-100 overflow-hidden">
+      {/* Desktop Sidebar */}
+      <div className="hidden md:flex md:flex-col md:w-64 border-r bg-white shadow-md">
         <Sideheader />
       </div>
 
-      {/* User List */}
+      {/* Mobile Hamburger */}
+      <div className="md:hidden fixed top-4 left-4 z-50">
+        <button
+          onClick={() => setSidebarOpen(!sidebarOpen)}
+          className="p-2 bg-white rounded-lg shadow-md"
+        >
+          {sidebarOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+        </button>
+      </div>
+
+      {/* Mobile Sidebar */}
+      {sidebarOpen && (
+        <div className="fixed inset-0 z-40 flex">
+          <div
+            className="fixed inset-0 bg-black/50"
+            onClick={() => setSidebarOpen(false)}
+          />
+          <div className="relative w-64 bg-white shadow-xl p-4">
+            <Sideheader />
+          </div>
+        </div>
+      )}
+
+      {/* Chat User List */}
       <div className="flex-1 flex flex-col overflow-y-auto p-4 md:p-6">
         <h1 className="text-2xl font-bold text-indigo-700 mb-4 text-center">
           💬 Your Chats
@@ -59,7 +89,9 @@ export default function ChatUserList() {
         ) : (
           <div className="space-y-3">
             {chats.map((chat) => {
-              const otherUserEmail = chat.participants.find((email) => email !== user.email);
+              const otherUserEmail = chat.participants.find(
+                (email) => email !== user.email
+              );
               return (
                 <div
                   key={chat.id}
@@ -92,6 +124,3 @@ export default function ChatUserList() {
     </div>
   );
 }
-
-
-

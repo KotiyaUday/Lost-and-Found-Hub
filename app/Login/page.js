@@ -1,4 +1,5 @@
 "use client";
+
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { auth, db } from "../../lib/firebase";
@@ -17,8 +18,6 @@ const Login = () => {
   const [loading, setLoading] = useState(true);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-
-  // extra form for new Google users
   const [showExtraForm, setShowExtraForm] = useState(false);
   const [googleUser, setGoogleUser] = useState(null);
   const [name, setName] = useState("");
@@ -28,15 +27,11 @@ const Login = () => {
     const unsub = onAuthStateChanged(auth, async (u) => {
       try {
         if (u) {
-          console.log("onAuthStateChanged login ->", u.uid);
-          // if google flow in progress, don't auto-redirect
           if (showExtraForm) {
             setUser(u);
             setLoading(false);
             return;
           }
-
-          // check user doc
           const userRef = doc(db, "users", u.uid);
           const snap = await getDoc(userRef);
           if (snap.exists()) {
@@ -45,19 +40,13 @@ const Login = () => {
               setUser(u);
               router.push("/Home");
             } else {
-              // show extra form to complete profile
               setUser(u);
               setName(data.name || u.displayName || "");
               setCollegeName(data.collegeName || "");
               setShowExtraForm(true);
             }
-          } else {
-            // no doc: just set user (don't redirect) — user will trigger flow via Google button
-            setUser(u);
-          }
-        } else {
-          setUser(null);
-        }
+          } else setUser(u);
+        } else setUser(null);
       } catch (err) {
         console.error("onAuthStateChanged error (login):", err);
       } finally {
@@ -71,14 +60,11 @@ const Login = () => {
   const handleGoogleSignIn = async () => {
     try {
       const provider = new GoogleAuthProvider();
-      provider.setCustomParameters({
-        prompt: "select_account",
-      });
+      provider.setCustomParameters({ prompt: "select_account" });
       const result = await signInWithPopup(auth, provider);
       const gUser = result.user;
       setGoogleUser(gUser);
 
-      // try to prefill from firestore doc if exists
       const userRef = doc(db, "users", gUser.uid);
       const snap = await getDoc(userRef);
       if (snap.exists()) {
@@ -90,7 +76,6 @@ const Login = () => {
         setCollegeName("");
       }
 
-      // show the extra form (user will submit)
       setShowExtraForm(true);
     } catch (error) {
       console.error("Sign-in failed:", error);
@@ -113,8 +98,13 @@ const Login = () => {
           uid,
           name,
           collegeName,
-          email: (googleUser && googleUser.email) || (user && user.email) || email || "",
-          photoURL: (googleUser && googleUser.photoURL) || (user && user.photoURL) || "",
+          email:
+            (googleUser && googleUser.email) ||
+            (user && user.email) ||
+            email ||
+            "",
+          photoURL:
+            (googleUser && googleUser.photoURL) || (user && user.photoURL) || "",
           createdAt: serverTimestamp(),
         },
         { merge: true }
@@ -132,7 +122,6 @@ const Login = () => {
     e.preventDefault();
     try {
       await signInWithEmailAndPassword(auth, email, password);
-      // onAuthStateChanged will handle redirect after checking doc
     } catch (error) {
       console.error("Email login failed:", error);
       alert("Invalid email or password. Please try again.");
@@ -140,10 +129,7 @@ const Login = () => {
   };
 
   const handleForgotPassword = async () => {
-    if (!email) {
-      alert("Please enter your email first!");
-      return;
-    }
+    if (!email) return alert("Please enter your email first!");
     try {
       await sendPasswordResetEmail(auth, email);
       alert(
@@ -164,16 +150,19 @@ const Login = () => {
 
   if (showExtraForm) {
     return (
-      <div className="min-h-screen w-full bg-gray-200 flex items-center justify-center p-4">
-        <div className="bg-white rounded-2xl shadow-2xl shadow-black p-8 w-full max-w-md">
-          <h1 className="text-2xl font-semibold mb-6 text-center text-gray-800">
+      <div className="min-h-screen w-full bg-gray-100 flex items-center justify-center p-4">
+        <div className="bg-white rounded-2xl shadow-2xl p-6 sm:p-8 w-full max-w-md">
+          <h1 className="text-2xl sm:text-3xl font-semibold mb-6 text-center text-gray-800">
             Complete Your Profile
           </h1>
-          <form onSubmit={handleGoogleFormSubmit} className="flex flex-col gap-4">
+          <form
+            onSubmit={handleGoogleFormSubmit}
+            className="flex flex-col gap-4"
+          >
             <input
               type="text"
               placeholder="Full Name"
-              className="border border-gray-400 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-400"
+              className="border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-400 focus:outline-none text-sm sm:text-base"
               value={name}
               onChange={(e) => setName(e.target.value)}
               required
@@ -181,15 +170,12 @@ const Login = () => {
             <input
               type="text"
               placeholder="College Name"
-              className="border border-gray-400 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-400"
+              className="border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-400 focus:outline-none text-sm sm:text-base"
               value={collegeName}
               onChange={(e) => setCollegeName(e.target.value)}
               required
             />
-            <button
-              type="submit"
-              className="bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition-all duration-200"
-            >
+            <button className="bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition-all duration-200 text-sm sm:text-base">
               Submit
             </button>
           </form>
@@ -199,11 +185,10 @@ const Login = () => {
   }
 
   return (
-    <div className="min-h-screen w-full bg-gray-200 flex items-center justify-center p-4">
-      <div className="bg-white flex flex-col md:flex-row rounded-2xl shadow-2xl shadow-black w-full max-w-5xl overflow-hidden">
-
+    <div className="min-h-screen w-full bg-gray-100 flex items-center justify-center p-4">
+      <div className="bg-white flex flex-col md:flex-row rounded-2xl shadow-2xl w-full max-w-5xl overflow-hidden">
         {/* Image Section */}
-        <div className="md:flex-1 w-full h-56 sm:h-72 md:h-auto">
+        <div className="md:flex-1 w-full h-64 sm:h-72 md:h-auto">
           <img
             src="/assets/registration.jpg"
             alt="Registration"
@@ -224,7 +209,7 @@ const Login = () => {
             <input
               type="email"
               placeholder="Email"
-              className="border border-gray-400 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400 text-sm sm:text-base"
+              className="border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400 text-sm sm:text-base"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
@@ -232,23 +217,19 @@ const Login = () => {
             <input
               type="password"
               placeholder="Password"
-              className="border border-gray-400 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400 text-sm sm:text-base"
+              className="border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400 text-sm sm:text-base"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
             />
-            <button
-              type="submit"
-              className="bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 active:scale-95 transition-all duration-200 text-sm sm:text-base"
-            >
+            <button className="bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 active:scale-95 transition-all duration-200 text-sm sm:text-base">
               Login
             </button>
           </form>
 
-          {/* Forgot password */}
           <button
             onClick={handleForgotPassword}
-            className="mt-2 text-sm text-blue-600 hover:underline font-medium"
+            className="mt-2 text-sm sm:text-base text-blue-600 hover:underline font-medium"
           >
             Forgot Password?
           </button>
@@ -263,14 +244,14 @@ const Login = () => {
           {/* Google Sign-In */}
           <button
             onClick={handleGoogleSignIn}
-            className="flex items-center justify-center gap-3 bg-white border border-black rounded-lg px-5 py-3 hover:shadow-xl active:scale-95 transition-all duration-200 w-full max-w-sm"
+            className="flex items-center justify-center gap-3 bg-white border border-gray-300 rounded-lg px-5 py-3 hover:shadow-md active:scale-95 transition-all duration-200 w-full max-w-sm"
           >
             <img
               src="https://www.svgrepo.com/show/475656/google-color.svg"
               alt="Google logo"
-              className="w-6 h-6"
+              className="w-5 h-5 sm:w-6 sm:h-6"
             />
-            <span className="font-medium text-black text-sm sm:text-base md:text-base">
+            <span className="font-medium text-black text-sm sm:text-base">
               Continue with Google
             </span>
           </button>

@@ -2,17 +2,9 @@
 import React, { useState, useEffect, useRef } from "react";
 import Sideheader from "@/Components/Sideheader";
 import { db, auth } from "@/lib/firebase";
-import {
-  doc,
-  setDoc,
-  collection,
-  addDoc,
-  query,
-  orderBy,
-  onSnapshot,
-  serverTimestamp,
-} from "firebase/firestore";
+import { doc, setDoc, collection, addDoc, query, orderBy, onSnapshot, serverTimestamp } from "firebase/firestore";
 import { useSearchParams } from "next/navigation";
+import { Menu, X } from "lucide-react";
 
 export default function ChatPage() {
   const searchParams = useSearchParams();
@@ -24,42 +16,32 @@ export default function ChatPage() {
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState("");
   const [user, setUser] = useState(null);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const chatEndRef = useRef(null);
 
-  // Track auth user
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged((u) => setUser(u));
     return () => unsubscribe();
   }, []);
 
-  // Generate unique chatId
   const chatId =
     user && otherUserEmail ? [user.email, otherUserEmail].sort().join("_") : null;
 
-  // Fetch messages
   useEffect(() => {
     if (!chatId) return;
     const messagesRef = collection(db, "chats", chatId, "messages");
     const q = query(messagesRef, orderBy("timestamp", "asc"));
-
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      const msgs = snapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
-      setMessages(msgs);
+      setMessages(snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })));
       chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
     });
-
     return () => unsubscribe();
   }, [chatId]);
 
-  // Send message
   const sendMessage = async () => {
     if (!newMessage.trim() || !user || !otherUserEmail) return;
 
     try {
-      // Update chat metadata
       await setDoc(
         doc(db, "chats", chatId),
         {
@@ -73,7 +55,6 @@ export default function ChatPage() {
         { merge: true }
       );
 
-      // Add message
       await addDoc(collection(db, "chats", chatId, "messages"), {
         sender: user.email,
         receiver: otherUserEmail,
@@ -90,10 +71,33 @@ export default function ChatPage() {
 
   return (
     <div className="flex h-screen bg-gradient-to-br from-indigo-100 via-purple-50 to-indigo-50">
-      {/* Sidebar */}
-      <div className="hidden md:flex flex-col w-72 border-r bg-white/70 backdrop-blur-md shadow-md">
+      {/* Desktop Sidebar */}
+      <div className="hidden md:flex md:flex-col md:w-72 border-r bg-white/70 backdrop-blur-md shadow-md">
         <Sideheader />
       </div>
+
+      {/* Mobile Hamburger */}
+      <div className="md:hidden fixed top-4 left-4 z-50">
+        <button
+          onClick={() => setSidebarOpen(!sidebarOpen)}
+          className="p-2 bg-white rounded-lg shadow-md"
+        >
+          {sidebarOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+        </button>
+      </div>
+
+      {/* Mobile Sidebar */}
+      {sidebarOpen && (
+        <div className="fixed inset-0 z-40 flex">
+          <div
+            className="fixed inset-0 bg-black/50"
+            onClick={() => setSidebarOpen(false)}
+          />
+          <div className="relative w-64 bg-white shadow-xl p-4">
+            <Sideheader />
+          </div>
+        </div>
+      )}
 
       {/* Chat Section */}
       <div className="flex flex-1 flex-col">

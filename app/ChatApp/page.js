@@ -1,5 +1,3 @@
-// app/ChatApp/page.js
-
 "use client";
 import React, { useState, useEffect, useRef } from "react";
 import { db, auth } from "@/lib/firebase";
@@ -16,6 +14,7 @@ import {
   where,
 } from "firebase/firestore";
 import Sideheader from "@/Components/Sideheader";
+import { Menu, X } from "lucide-react";
 
 export default function ChatApp() {
   const [user, setUser] = useState(null);
@@ -24,6 +23,7 @@ export default function ChatApp() {
   const [selectedChat, setSelectedChat] = useState(null);
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState("");
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const chatEndRef = useRef(null);
 
   // Track logged-in user
@@ -93,6 +93,7 @@ export default function ChatApp() {
 
   const selectChat = (chat) => {
     setSelectedChat(chat);
+    setSidebarOpen(false); // close sidebar on mobile
   };
 
   const sendMessage = async () => {
@@ -126,14 +127,59 @@ export default function ChatApp() {
   };
 
   return (
-    <div className="h-screen w-full grid grid-cols-4 bg-gray-100">
-      {/* --- Column 1: Side Menu --- */}
-      <div className="col-span-1 hidden md:block w-64 border-r bg-white shadow-md">
+    <div className="h-screen w-full flex bg-gray-100 overflow-hidden">
+      {/* Desktop Sidebar */}
+      <div className="hidden md:flex md:flex-col md:w-64 border-r bg-white shadow-md">
         <Sideheader />
       </div>
 
-      {/* --- Column 2: Chat List --- */}
-      <div className="bg-white border-r border-gray-300 overflow-y-auto col-span-1">
+      {/* Mobile Hamburger */}
+      <div className="md:hidden fixed top-4 left-4 z-50">
+        <button
+          onClick={() => setSidebarOpen(!sidebarOpen)}
+          className="p-2 bg-white rounded-lg shadow-md"
+        >
+          {sidebarOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+        </button>
+      </div>
+
+      {/* Mobile Sidebar */}
+      {sidebarOpen && (
+        <div className="fixed inset-0 z-40 flex">
+          <div
+            className="fixed inset-0 bg-black/50"
+            onClick={() => setSidebarOpen(false)}
+          />
+          <div className="relative w-64 bg-white shadow-xl p-4">
+            <Sideheader />
+            <div className="mt-6 border-t pt-4">
+              <div className="text-lg font-semibold mb-2">Chats</div>
+              {chats.map((chat) => {
+                const otherUserEmail = chat.participants.find(
+                  (email) => email !== user.email
+                );
+                const displayName =
+                  userDetails[otherUserEmail] || otherUserEmail.split("@")[0];
+                return (
+                  <div
+                    key={chat.id}
+                    onClick={() => selectChat(chat)}
+                    className="p-2 hover:bg-gray-100 cursor-pointer rounded-md"
+                  >
+                    <div className="font-medium">{displayName}</div>
+                    <div className="text-sm text-gray-500 truncate">
+                      {chat.lastMessage || "Say hi!"}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Chat List (Desktop) */}
+      <div className="hidden md:flex flex-col w-64 bg-white border-r border-gray-300 overflow-y-auto">
         <div className="p-4 text-lg font-semibold border-b">Chats</div>
         {chats.length === 0 ? (
           <p className="text-gray-500 text-center mt-10">
@@ -155,9 +201,7 @@ export default function ChatApp() {
                     selectedChat?.id === chat.id ? "bg-gray-200" : ""
                   }`}
                 >
-                  <div className="font-medium text-gray-900">
-                    {displayName}
-                  </div>
+                  <div className="font-medium">{displayName}</div>
                   <div className="text-sm text-gray-500 truncate">
                     {chat.lastMessage || "Say hi!"}
                   </div>
@@ -168,27 +212,23 @@ export default function ChatApp() {
         )}
       </div>
 
-      {/* --- Columns 3 & 4: Chat Window --- */}
-      <div className="col-span-2 flex flex-col mr-25">
-        {/* Chat Header */}
+      {/* Chat Window */}
+      <div className="flex-1 flex flex-col">
+        {/* Header */}
         <div className="p-4 bg-white border-b border-gray-300 flex justify-between items-center">
           <div className="font-semibold text-lg">
             {selectedChat
               ? `Chat with ${
                   userDetails[
-                    selectedChat.participants.find(
-                      (email) => email !== user.email
-                    )
+                    selectedChat.participants.find((email) => email !== user.email)
                   ] ||
-                  selectedChat.participants.find(
-                    (email) => email !== user.email
-                  )
+                  selectedChat.participants.find((email) => email !== user.email)
                 }`
               : "Select a chat"}
           </div>
         </div>
 
-        {/* Messages Area */}
+        {/* Messages */}
         <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-gray-50">
           {selectedChat ? (
             messages.map((msg) => (
