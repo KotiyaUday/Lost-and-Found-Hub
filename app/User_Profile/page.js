@@ -15,9 +15,12 @@ import {
   serverTimestamp,
   where,
 } from "firebase/firestore";
+import { signOut } from "firebase/auth";
+import { useRouter } from "next/navigation";
 import md5 from "crypto-js/md5";
 
 const UserProfile = () => {
+  const router = useRouter();
   const [userPosts, setUserPosts] = useState([]);
   const [filteredPosts, setFilteredPosts] = useState([]);
   const [selectedFilter, setSelectedFilter] = useState("total");
@@ -173,6 +176,18 @@ const UserProfile = () => {
     }
   };
 
+  // ✅ ADD THIS FUNCTION
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+      localStorage.clear();
+      router.push("/login");
+    } catch (error) {
+      console.error("Logout failed:", error);
+      alert("Failed to log out. Please try again.");
+    }
+  };
+
   return (
     <div className="flex min-h-screen bg-blue-50">
       {/* Sidebar for desktop */}
@@ -221,6 +236,12 @@ const UserProfile = () => {
               <Mail className="text-blue-600 w-5 h-5" />
               <span>{userInfo.email}</span>
             </div>
+            <button
+              onClick={handleLogout}
+              className="bg-blue-400 p-2 w-30 m-3 rounded-2xl text-white hover:bg-blue-500"
+            >
+              Logout
+            </button>
           </div>
         </div>
 
@@ -307,18 +328,69 @@ const UserProfile = () => {
 
               <h2 className="text-xl font-bold text-indigo-700 mb-4">Edit Post</h2>
               <form onSubmit={handleEditSubmit} className="space-y-4">
-                <input type="text" name="title" value={editPostData.title} onChange={handleEditChange} className="w-full border border-gray-300 rounded-lg px-3 py-2" placeholder="Title" required />
-                <textarea name="description" value={editPostData.description} onChange={handleEditChange} className="w-full border border-gray-300 rounded-lg px-3 py-2" placeholder="Description" required />
-                <input type="text" name="location" value={editPostData.location} onChange={handleEditChange} className="w-full border border-gray-300 rounded-lg px-3 py-2" placeholder="Location" required />
-                <input type="date" name="date" value={editPostData.date} onChange={handleEditChange} className="w-full border border-gray-300 rounded-lg px-3 py-2" required />
-                <input type="text" name="category" value={editPostData.category} onChange={handleEditChange} className="w-full border border-gray-300 rounded-lg px-3 py-2" placeholder="Category" required />
-                <input type="text" name="contact" value={editPostData.contact} onChange={handleEditChange} className="w-full border border-gray-300 rounded-lg px-3 py-2" placeholder="Contact Info" required />
+                <input
+                  type="text"
+                  name="title"
+                  value={editPostData.title}
+                  onChange={handleEditChange}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2"
+                  placeholder="Title"
+                  required
+                />
+                <textarea
+                  name="description"
+                  value={editPostData.description}
+                  onChange={handleEditChange}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2"
+                  placeholder="Description"
+                  required
+                />
+                <input
+                  type="text"
+                  name="location"
+                  value={editPostData.location}
+                  onChange={handleEditChange}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2"
+                  placeholder="Location"
+                  required
+                />
+                <input
+                  type="date"
+                  name="date"
+                  value={editPostData.date}
+                  onChange={handleEditChange}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2"
+                  required
+                />
+                <input
+                  type="text"
+                  name="category"
+                  value={editPostData.category}
+                  onChange={handleEditChange}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2"
+                  placeholder="Category"
+                  required
+                />
+                <input
+                  type="text"
+                  name="contact"
+                  value={editPostData.contact}
+                  onChange={handleEditChange}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2"
+                  placeholder="Contact Info"
+                  required
+                />
                 <div>
                   <label className="block mb-1 font-medium">Update Image</label>
                   <input type="file" accept="image/*" onChange={handleImageChange} />
                   {editImage && <p className="text-sm mt-1">{editImage.name}</p>}
                 </div>
-                <button type="submit" className="w-full bg-indigo-600 text-white py-2 rounded-lg hover:bg-indigo-700 transition-all duration-300">Update Post</button>
+                <button
+                  type="submit"
+                  className="w-full bg-indigo-600 text-white py-2 rounded-lg hover:bg-indigo-700 transition-all duration-300"
+                >
+                  Update Post
+                </button>
               </form>
             </div>
           </div>

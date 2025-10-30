@@ -23,7 +23,7 @@ const Sideheader = () => {
     try {
       await signOut(auth);
       alert("Logged out successfully!");
-      router.push("/Login"); // ✅ Correct redirect method for App Router
+      router.push("/Login");
     } catch (error) {
       console.error("Logout failed:", error);
       alert("Error logging out. Please try again.");
@@ -31,85 +31,124 @@ const Sideheader = () => {
   };
 
   return (
-    <div
-      className={`h-screen bg-gradient-to-b from-blue-100 to-indigo-200 border-r-4 border-indigo-300 shadow-2xl flex flex-col transition-all duration-300 ${isOpen ? "w-72" : "w-15"
+    <>
+      {/* 🔹 Bottom Navigation Bar */}
+      <div className="hidden max-md:block">
+        <nav className="fixed bottom-0 left-0 right-0 bg-gradient-to-r from-indigo-100 to-blue-100 border-t border-indigo-200 shadow-lg z-50">
+          <ul className="flex justify-around items-center py-2">
+            {navItems.map((item) => {
+              const isActive = pathname === item.href;
+              return (
+                <li key={item.name}>
+                  <Link
+                    href={item.href}
+                    className={`flex flex-col items-center gap-1 px-4 py-2 rounded-xl transition-all duration-200 ${
+                      isActive
+                        ? "bg-indigo-600 text-white shadow-md"
+                        : "text-indigo-600 hover:bg-indigo-200 hover:text-indigo-700"
+                    }`}
+                  >
+                    <item.icon className="w-6 h-6" /> {/* ✅ fixed rendering */}
+                    <span className="text-xs font-medium">{item.name}</span>
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+        </nav>
+      </div>
+
+      {/* 🔹 Side Header (Left Panel) */}
+      <div
+        className= {`max-md:hidden h-screen bg-gradient-to-b from-blue-100 to-indigo-200 border-r-4 border-indigo-300 shadow-2xl flex flex-col transition-all duration-300 ${
+          isOpen ? "w-72" : "w-15"
         }`}
-    >
-      {/* 🔹 Top Section */}
-      <div className="flex flex-col items-end justify-between px-4 py-5">
-        {/* Menu button for toggle */}
+      >
+        {/* Top Section */}
+        <div className="flex flex-col items-end justify-between px-4 py-5">
+          {/* Menu button for toggle */}
+          <button
+            onClick={() => setIsOpen(!isOpen)}
+            className="p-2 bg-white rounded-lg shadow-md hover:scale-105 active:scale-95 transition-all"
+          >
+            <Menu className="w-6 h-6 text-indigo-700" />
+          </button>
+
+          {/* Logo */}
+          <div
+            className={`flex items-center gap-3 transition-all duration-300 ${
+              !isOpen && "opacity-0 hidden"
+            }`}
+          >
+            <img src="/assets/logo.png" alt="Logo" className="h-60 w-60" />
+          </div>
+        </div>
+
+        {/* Navigation Links */}
+        <nav className="flex flex-col flex-1 mt-5 gap-2">
+          {navItems.map((item, index) => {
+            const isActive = pathname === item.href;
+            return (
+              <Link
+                key={index}
+                href={item.href}
+                className={`group flex items-center gap-4 px-5 py-3 rounded-xl mx-2 transition-all duration-200 ease-in-out ${
+                  isActive
+                    ? "bg-indigo-600 text-white shadow-lg"
+                    : "text-gray-800 hover:bg-indigo-500 hover:text-white"
+                }`}
+              >
+                <item.icon
+                  className={`w-6 h-6 transition-all duration-200 ${
+                    isActive
+                      ? "text-white"
+                      : "text-indigo-600 group-hover:text-white"
+                  } ${!isOpen && "mx-auto"}`}
+                />
+                {isOpen && (
+                  <span
+                    className={`font-medium tracking-wide text-base transition-transform duration-150 ${
+                      isActive
+                        ? "translate-x-1"
+                        : "group-hover:translate-x-1"
+                    }`}
+                  >
+                    {item.name}
+                  </span>
+                )}
+              </Link>
+            );
+          })}
+        </nav>
+
+        {/* Logout Button */}
         <button
-          onClick={() => setIsOpen(!isOpen)}
-          className="p-2 bg-white rounded-lg shadow-md hover:scale-105 active:scale-95 transition-all"
+          onClick={handleLogout}
+          className="bg-blue-400 p-2 w-30 m-3 rounded-2xl text-white hover:bg-blue-500"
+        >
+          Logout
+        </button>
+
+        {/* Footer */}
+        <div
+          className={`mt-auto px-4 py-4 text-sm text-gray-600 border-t border-indigo-300 ${
+            !isOpen && "hidden"
+          }`}
+        >
+          <p className="text-center font-medium">
+            © {new Date().getFullYear()} Lost & Found Hub
+          </p>
+        </div>
+
+        {/* Hamburger Button for Mobile */}
+        <button
+          onClick={() => setIsOpen(true)}
+          className="fixed top-4 left-4 md:hidden z-40 p-2 bg-white rounded-lg shadow-md hover:scale-105 active:scale-95 transition-all"
         >
           <Menu className="w-6 h-6 text-indigo-700" />
         </button>
-        <div
-          className={`flex items-center gap-3 transition-all duration-300 ${!isOpen && "opacity-0 hidden"
-            }`}
-        >
-          <img src="/assets/logo.png" alt="Logo" className="h-60 w-60" />
-        </div>
-
       </div>
-
-      {/* 🔹 Navigation Links */}
-      <nav className="flex flex-col flex-1 mt-5 gap-2">
-        {navItems.map((item, index) => {
-          const isActive = pathname === item.href;
-
-          return (
-            <Link
-              key={index}
-              href={item.href}
-              className={`group flex items-center gap-4 px-5 py-3 rounded-xl mx-2 transition-all duration-200 ease-in-out ${isActive
-                  ? "bg-indigo-600 text-white shadow-lg"
-                  : "text-gray-800 hover:bg-indigo-500 hover:text-white"
-                }`}
-            >
-              <item.icon
-                className={`w-6 h-6 transition-all duration-200 ${isActive ? "text-white" : "text-indigo-600 group-hover:text-white"
-                  } ${!isOpen && "mx-auto"}`}
-              />
-              {isOpen && (
-                <span
-                  className={`font-medium tracking-wide text-base transition-transform duration-150 ${isActive ? "translate-x-1" : "group-hover:translate-x-1"
-                    }`}
-                >
-                  {item.name}
-                </span>
-              )}
-            </Link>
-          );
-        })}
-      </nav>
-
-
-      <button
-        onClick={handleLogout}
-        className="bg-blue-400 p-2 w-30 m-3 rounded-2xl text-white hover:bg-blue-500"
-      >
-        Logout
-      </button>
-
-      {/* 🔹 Footer Section */}
-      <div
-        className={`mt-auto px-4 py-4 text-sm text-gray-600 border-t border-indigo-300 ${!isOpen && "hidden"
-          }`}
-      >
-        <p className="text-center font-medium">
-          © {new Date().getFullYear()} Lost & Found Hub
-        </p>
-      </div>
-
-      {/* Hamburger button for mobile */}
-      <button
-        onClick={() => setIsOpen(true)}
-        className="fixed top-4 left-4 md:hidden z-40 p-2 bg-white rounded-lg shadow-md hover:scale-105 active:scale-95 transition-all"
-      >
-        <Menu className="w-6 h-6 text-indigo-700" />
-      </button>
-    </div>
+    </>
   );
 };
 
